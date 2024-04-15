@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id       Int      @id @default(autoincrement())
+  name     String   @unique
+  pdfBooks PdfBook[]
+}
+
+model users {
+  id          Int       @id @default(autoincrement())
+  email       String    @unique
+  password    String
+  full_name   String
+  profile_pic String?
+  about       String?
+  pdfBooks    PdfBook[]
+}
+
+model PdfBook {
+  id           Int       @id @default(autoincrement())
+  cover_url    String?
+  pdf_url      String    @unique
+  title        String
+  author_name  String
+  category     Category? @relation(fields: [category_id], references: [id])
+  category_id  Int?
+  publisher    String
+  language     String
+  year         Int
+  edition      String
+  description  String?
+  uploader     users?     @relation(fields: [uploader_id], references: [id])
+  uploader_id  Int?
+}
+
+

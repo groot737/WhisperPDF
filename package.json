@@ -1,0 +1,34 @@
+{
+  "name": "whisperpdf",
+  "version": "1.0.0",
+  "description": "Future one of the big open source pdf library.  This is where journey begins🚀",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/groot737/WhisperPDF.git"
+  },
+  "author": "Giorgi Kuchuloria",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/groot737/WhisperPDF/issues"
+  },
+  "homepage": "https://github.com/groot737/WhisperPDF#readme",
+  "dependencies": {
+    "@prisma/client": "^5.12.1",
+    "aws-sdk": "^2.1599.0",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-flash": "^0.0.2",
+    "express-session": "^1.18.0",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.12.1"
+  }
+}
