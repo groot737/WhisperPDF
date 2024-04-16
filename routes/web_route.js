@@ -108,7 +108,6 @@ router.get('/dashboard', adminMiddleware, async (req, res) => {
 router.post('/upload', upload.single('file'), async (req, res) => {
   const { fullname, bio } = req.body;
 
-  // Update fullname and bio
   try {
     if (fullname.trim().length !== 0) {
       await prisma.users.update({
@@ -149,16 +148,14 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       req.flash('error', 'Failed to upload image');
       return res.redirect('/dashboard');
     }
-    console.log('File uploaded successfully:', uploadData.Location);
     fs.unlinkSync(req.file.path); // Delete file from /uploads
 
     try {
-      // Update user's profile_pic to the new image URL
+      
       const updatedUser = await prisma.users.update({
         where: { id: req.user.id },
         data: { profile_pic: uploadData.Location },
       });
-      console.log('User data updated:', updatedUser);
 
       req.flash('success', 'Image uploaded and user data updated successfully');
       res.redirect('/dashboard');
@@ -169,6 +166,66 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     }
   });
 });
+
+//========== DELETE ACCOUNT ==================
+router.post('/delete-account', async (req, res) => {
+  try {
+    await prisma.users.delete({
+      where: { id: req.user.id },
+    });
+
+    const listParams = {
+      Bucket: 'whisperpdf',
+      Prefix: `${req.user.id}/`,
+    };
+    s3.listObjectsV2(listParams, async (err, data) => {
+      if (err) {
+        console.error('Error listing objects in S3:', err);
+        req.flash('error', 'Failed to delete user account');
+        return res.redirect('/dashboard');
+      }
+
+      const objectsToDelete = data.Contents.map(obj => ({ Key: obj.Key }));
+      if (objectsToDelete.length > 0) {
+        const deleteParams = {
+          Bucket: 'whisperpdf',
+          Delete: {
+            Objects: objectsToDelete,
+          },
+        };
+        s3.deleteObjects(deleteParams, (delErr, delData) => {
+          if (delErr) {
+            console.error('Error deleting objects in S3:', delErr);
+            req.flash('error', 'Failed to delete user account');
+            return res.redirect('/dashboard');
+          }
+
+          req.logout((logoutErr) => {
+            if (logoutErr) {
+              console.error('Error ending user session:', logoutErr);
+            }
+            req.flash('success', 'User account deleted successfully');
+            res.redirect('/'); 
+          });
+        });
+      } else {
+
+        req.logout((logoutErr) => {
+          if (logoutErr) {
+            console.error('Error ending user session:', logoutErr);
+          }
+          req.flash('success', 'User account deleted successfully');
+          res.redirect('/'); 
+        });
+      }
+    });
+  } catch (deleteError) {
+    console.error('Error deleting user account:', deleteError);
+    req.flash('error', 'Failed to delete user account');
+    res.redirect('/dashboard');
+  }
+});
+
 
 
 
