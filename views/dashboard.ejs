@@ -1,15 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .tab-content {
+      margin-top: 20px;
+    }
+    .avatar {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 20px;
+    }
+    .profile-info {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      text-align: center;
+    }
+    .profile-info h4 {
+      flex-basis: 100%;
+      margin-top: 0;
+      font-size: 24px;
+    }
+    .profile-info p {
+      flex-basis: 100%;
+      margin-bottom: 0;
+      font-size: 18px;
+    }
+  </style>
 </head>
 <body>
-    <h1>if you see this you're authorized</h1>
-    <form id="logout-form" action="/logout" method="post">
-        <button>Logout</button>
-    </form>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+      <a class="navbar-brand" href="#">Dashboard</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <form action="/logout" method="post"><button class="btn btn-link text-primary">Logout</button></form>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-5">
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link active" data-toggle="tab" href="#profile">Profile</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="tab" href="#edit">Edit Profile</a>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="profile">
+        <div class="row mt-3 justify-content-center">
+          <div class="col-md-6 profile-info">
+            <img src="<%= user.profile_pic%>" alt="Avatar" class="avatar">
+            <h4>Full Name</h4>
+            <h3><%= user.full_name %></h3>
+            <h4>Bio</h4>
+            <h3><%= user.about %></h3>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="edit">
+        <div class="row mt-3">
+          <div class="col-md-8 offset-md-2">
+            <form action="/upload" enctype="multipart/form-data" method="post">
+              <% if (messages.error && messages.error.length > 0) { %>
+                <div class="alert alert-danger" role="alert">
+                  <%= messages.error %>
+                </div>
+              <% } %>
+              
+              <% if (messages.success && messages.success.length > 0) { %>
+                <div class="alert alert-success" role="alert">
+                  <%= messages.success %>
+                </div>
+              <% } %>
+            
+              <div class="form-group">
+                <label for="fullname">Full Name</label>
+                <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Enter your full name">
+              </div>
+            
+              <div class="form-group">
+                <label for="bio">Bio</label>
+                <textarea class="form-control" id="bio" name="bio" rows="3" placeholder="Enter your bio"></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label for="file">Upload Picture</label>
+                <input type="file" class="form-control-file" id="file" name="file">
+              </div>
+              
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>                    
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
