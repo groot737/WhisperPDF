@@ -10,7 +10,7 @@ const s3 = new AWS.S3({
 });
 
 
-const bucketName = 'whisperpdf';
+const bucketName = process.env.BUCKET;
 
 async function createUserFolders(userId) {
   const userFolder = `${userId}/`;
