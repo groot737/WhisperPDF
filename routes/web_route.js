@@ -10,6 +10,9 @@ const AWS = require('aws-sdk');
 const { authMiddleware, adminMiddleware } = require('../controllers/checkuser');
 const multer = require('multer');
 const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
+const {uploadToS3} = require('../config/cloudfunction/uploads3')
+require('dotenv').config();
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -137,7 +140,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   // Upload file
   const fileContent = fs.readFileSync(req.file.path);
   const params = {
-    Bucket: 'whisperpdf',
+    Bucket: process.env.BUCKET,
     Key: `${req.user.id}/avatar.png`, // Always upload with the same key (filename)
     Body: fileContent,
   };
@@ -151,7 +154,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     fs.unlinkSync(req.file.path); // Delete file from /uploads
 
     try {
-      
+
       const updatedUser = await prisma.users.update({
         where: { id: req.user.id },
         data: { profile_pic: uploadData.Location },
@@ -175,7 +178,7 @@ router.post('/delete-account', async (req, res) => {
     });
 
     const listParams = {
-      Bucket: 'whisperpdf',
+      Bucket: process.env.BUCKET,
       Prefix: `${req.user.id}/`,
     };
     s3.listObjectsV2(listParams, async (err, data) => {
@@ -188,7 +191,7 @@ router.post('/delete-account', async (req, res) => {
       const objectsToDelete = data.Contents.map(obj => ({ Key: obj.Key }));
       if (objectsToDelete.length > 0) {
         const deleteParams = {
-          Bucket: 'whisperpdf',
+          Bucket: process.env.BUCKET,
           Delete: {
             Objects: objectsToDelete,
           },
@@ -205,7 +208,7 @@ router.post('/delete-account', async (req, res) => {
               console.error('Error ending user session:', logoutErr);
             }
             req.flash('success', 'User account deleted successfully');
-            res.redirect('/'); 
+            res.redirect('/');
           });
         });
       } else {
@@ -215,7 +218,7 @@ router.post('/delete-account', async (req, res) => {
             console.error('Error ending user session:', logoutErr);
           }
           req.flash('success', 'User account deleted successfully');
-          res.redirect('/'); 
+          res.redirect('/');
         });
       }
     });
@@ -226,6 +229,54 @@ router.post('/delete-account', async (req, res) => {
   }
 });
 
+// ============= UPLOAD PDF BOOKS ==================
+router.get('/pdf', adminMiddleware, (req, res) => {
+  res.render('pdf')
+})
+
+router.post('/pdf', upload.fields([{ name: 'cover', maxCount: 1 }, { name: 'pdf', maxCount: 1 }]), async (req, res) => {
+  try {
+    const { cover, pdf } = req.files;
+    const { title, author, publisher, language, year, edition, description } = req.body
+    const coverFileName = `${uuidv4()}-${cover[0].originalname}`;
+    const pdfFileName = `${uuidv4()}-${pdf[0].originalname}`;
+
+    fs.renameSync(cover[0].path, `uploads/${coverFileName}`);
+    fs.renameSync(pdf[0].path, `uploads/${pdfFileName}`);
+
+    await Promise.all([
+      uploadToS3(req.user.id, 'cover', coverFileName, `uploads/${coverFileName}`),
+      uploadToS3(req.user.id, 'pdf', pdfFileName, `uploads/${pdfFileName}`),
+    ]);
+
+    fs.unlinkSync(`uploads/${coverFileName}`);
+    fs.unlinkSync(`uploads/${pdfFileName}`);
+
+    const newBook = await prisma.PdfBook.create({
+      data: {
+        cover_url: `https://s3.amazonaws.com/${process.env.BUCKET}/${req.user.id}/cover/${coverFileName}`,
+        pdf_url: `https://s3.amazonaws.com/${process.env.BUCKET}/${req.user.id}/pdf/${pdfFileName}`,
+        title,
+        author_name: author,
+        category_id: 20, 
+        publisher,
+        language,
+        year: +year,
+        edition,
+        description,
+        uploader_id: req.user.id,
+      },
+    });
+
+    req.flash('success', 'Files uploaded successfully and book entry created');
+    res.redirect('/pdf'); 
+  } catch (error) {
+    console.error('Error uploading files or creating book entry:', error);
+    
+    req.flash('error', 'Error uploading files or creating book entry');
+    res.redirect('/pdf'); 
+  }
+});
 
 
 
