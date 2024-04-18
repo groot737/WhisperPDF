@@ -36,4 +36,6 @@ async function createUserFolders(userId) {
   }
 }
 
+
+
 module.exports = { createUserFolders, s3 };
