@@ -295,7 +295,7 @@ router.get('/my-books', adminMiddleware, async (req, res) => {
 
 
 // ============ Delete single ebook (temporary code) ================//
-router.get('/book/:id', adminMiddleware, async (req, res) => {
+router.get('/delete-book/:id', adminMiddleware, async (req, res) => {
   const itemId = parseInt(req.params.id);
   try {
     const existingItem = await prisma.pdfBook.findUnique({
@@ -346,5 +346,64 @@ router.get('/book/:id', adminMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Error deleting item' });
   }
 });
+
+// ============== EDIT BOOK DATA ============================//
+router.get('/edit-book', adminMiddleware, (req, res) => {
+  res.render('edit-book')
+})
+
+router.post('/edit-book', upload.fields([{ name: 'cover', maxCount: 1 }, { name: 'pdf', maxCount: 1 }]), async (req, res) => {
+  try {
+    const { bookId, ...data } = req.body;
+
+    for (const key in data) {
+      if (data[key].trim() === '') {
+        delete data[key];
+      }
+    }
+
+    const book = await prisma.pdfBook.findUnique({
+      where: { id: parseInt(bookId) },
+    });
+
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    let coverUrl = book.cover_url; 
+    let pdfUrl = book.pdf_url; 
+
+    if (req.files['cover']) {
+      const coverFile = req.files['cover'][0];
+      const coverFilePath = coverFile.path;
+      coverUrl = await uploadToS3(req.user.id, 'covers', coverUrl.slice(coverUrl.indexOf('/covers/') + 8), coverFilePath);
+      fs.unlinkSync(coverFilePath)
+    }
+
+    if (req.files['pdf']) {
+      const pdfFile = req.files['pdf'][0];
+      const pdfFilePath = pdfFile.path;
+      pdfUrl = await uploadToS3(req.user.id, 'pdfs', pdfUrl.slice(pdfUrl.indexOf('/pdfs/') + 6), pdfFilePath);
+      fs.unlinkSync(pdfFilePath)
+    }
+
+    const updatedBook = await prisma.pdfBook.update({
+      where: { id: parseInt(bookId) },
+      data: {
+        ...data,
+        cover_url: coverUrl,
+        pdf_url: pdfUrl,
+      },
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating book:', err);
+    res.status(500).json({ error: 'Error updating book' });
+  }
+});
+
+
+
 
 module.exports = router;
