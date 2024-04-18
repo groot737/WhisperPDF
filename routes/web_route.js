@@ -11,7 +11,7 @@ const { authMiddleware, adminMiddleware } = require('../controllers/checkuser');
 const multer = require('multer');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
-const {uploadToS3} = require('../config/cloudfunction/uploads3')
+const { uploadToS3 } = require('../config/cloudfunction/uploads3')
 require('dotenv').config();
 
 const upload = multer({ dest: 'uploads/' });
@@ -173,6 +173,10 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 //========== DELETE ACCOUNT ==================
 router.post('/delete-account', async (req, res) => {
   try {
+    await prisma.pdfBook.deleteMany({
+      where: { uploader_id: req.user.id },
+    });
+
     await prisma.users.delete({
       where: { id: req.user.id },
     });
@@ -212,7 +216,6 @@ router.post('/delete-account', async (req, res) => {
           });
         });
       } else {
-
         req.logout((logoutErr) => {
           if (logoutErr) {
             console.error('Error ending user session:', logoutErr);
@@ -222,8 +225,8 @@ router.post('/delete-account', async (req, res) => {
         });
       }
     });
-  } catch (deleteError) {
-    console.error('Error deleting user account:', deleteError);
+  } catch (error) {
+    console.error('Error deleting user account:', error);
     req.flash('error', 'Failed to delete user account');
     res.redirect('/dashboard');
   }
@@ -245,8 +248,8 @@ router.post('/pdf', upload.fields([{ name: 'cover', maxCount: 1 }, { name: 'pdf'
     fs.renameSync(pdf[0].path, `uploads/${pdfFileName}`);
 
     await Promise.all([
-      uploadToS3(req.user.id, 'cover', coverFileName, `uploads/${coverFileName}`),
-      uploadToS3(req.user.id, 'pdf', pdfFileName, `uploads/${pdfFileName}`),
+      uploadToS3(req.user.id, 'covers', coverFileName, `uploads/${coverFileName}`),
+      uploadToS3(req.user.id, 'pdfs', pdfFileName, `uploads/${pdfFileName}`),
     ]);
 
     fs.unlinkSync(`uploads/${coverFileName}`);
@@ -254,11 +257,11 @@ router.post('/pdf', upload.fields([{ name: 'cover', maxCount: 1 }, { name: 'pdf'
 
     const newBook = await prisma.PdfBook.create({
       data: {
-        cover_url: `https://s3.amazonaws.com/${process.env.BUCKET}/${req.user.id}/cover/${coverFileName}`,
-        pdf_url: `https://s3.amazonaws.com/${process.env.BUCKET}/${req.user.id}/pdf/${pdfFileName}`,
+        cover_url: `https://s3.amazonaws.com/${process.env.BUCKET}/${req.user.id}/covers/${coverFileName}`,
+        pdf_url: `https://s3.amazonaws.com/${process.env.BUCKET}/${req.user.id}/pdfs/${pdfFileName}`,
         title,
         author_name: author,
-        category_id: 20, 
+        category_id: 20,
         publisher,
         language,
         year: +year,
@@ -269,15 +272,79 @@ router.post('/pdf', upload.fields([{ name: 'cover', maxCount: 1 }, { name: 'pdf'
     });
 
     req.flash('success', 'Files uploaded successfully and book entry created');
-    res.redirect('/pdf'); 
+    res.redirect('/pdf');
   } catch (error) {
     console.error('Error uploading files or creating book entry:', error);
-    
+
     req.flash('error', 'Error uploading files or creating book entry');
-    res.redirect('/pdf'); 
+    res.redirect('/pdf');
+  }
+});
+
+//============== list user books ================//
+router.get('/my-books', adminMiddleware, async (req, res) => {
+  try {
+    const books = await prisma.PdfBook.findMany({
+      where: { uploader_id: req.user.id },
+    });
+    res.render('books', { books })
+  } catch (error) {
+    res.status(500).send('Internal Server Error');
   }
 });
 
 
+// ============ Delete single ebook (temporary code) ================//
+router.get('/book/:id', adminMiddleware, async (req, res) => {
+  const itemId = parseInt(req.params.id);
+  try {
+    const existingItem = await prisma.pdfBook.findUnique({
+      where: { id: itemId },
+    });
+
+    if (!existingItem) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+
+    const coverUrl = existingItem['cover_url'];
+    const pdfUrl = existingItem['pdf_url'];
+
+    const deleteFilesFromS3 = async (coverUrl, pdfUrl) => {
+      try {
+        const coverKey = coverUrl.slice(coverUrl.indexOf('/covers/') + 8);
+        const pdfKey = pdfUrl.slice(pdfUrl.indexOf('/pdfs/') + 6);
+        const deleteParams = {
+          Bucket: process.env.BUCKET,
+          Delete: {
+            Objects: [
+              { Key: req.user.id + '/covers/' + coverKey },
+              { Key: req.user.id + '/pdfs/' + pdfKey },
+            ],
+          },
+        };
+
+        await s3.deleteObjects(deleteParams).promise();
+        console.log('Files deleted from S3 successfully');
+        
+        // Delete item from the database after files are deleted from S3
+        await prisma.pdfBook.delete({
+          where: { id: existingItem["id"] },
+        });
+
+        // Send success response after both S3 deletion and database deletion
+        res.json({ deleted: true });
+      } catch (error) {
+        console.error('Error deleting files from S3:', error);
+        res.status(500).json({ error: 'Error deleting files from S3' });
+      }
+    };
+
+    await deleteFilesFromS3(existingItem['cover_url'], existingItem['pdf_url']);
+
+  } catch (error) {
+    console.error('Error deleting item:', error);
+    res.status(500).json({ error: 'Error deleting item' });
+  }
+});
 
 module.exports = router;
