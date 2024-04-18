@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book List</title>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .book-card {
+      width: 220px;
+      height: 400px;
+      margin-bottom: 20px;
+    }
+    .book-cover {
+      width: 100%;
+      height: 70%;
+      object-fit: cover;
+    }
+    .card-body {
+      height: 30%;
+      overflow: hidden;
+    }
+    .card-title {
+      font-size: 16px;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <div class="row">
+      <% books.forEach(book => { %>
+        <div class="col-md-4">
+          <div class="card book-card">
+            <img src="<%= book.cover_url %>" class="card-img-top book-cover" alt="Book Cover">
+            <div class="card-body">
+              <h5 class="card-title"><%= book.title %></h5>
+              <a href="<%= book.pdf_url %>" class="btn btn-primary btn-sm">Download PDF</a>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
