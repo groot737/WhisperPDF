@@ -403,7 +403,31 @@ router.post('/edit-book', upload.fields([{ name: 'cover', maxCount: 1 }, { name:
   }
 });
 
+// ================== SEARCH ENDPOINT ========================
+router.get('/search/:name', async (req, res) => {
+  const search = req.params.name.trim().toLowerCase();
+  const result = [];
 
+  try {
+    const books = await prisma.pdfBook.findMany();
+
+    for (const book of books) {
+      const title = book['title'].trim().toLowerCase();
+      if (title.includes(search)) {
+        result.push(book);
+      }
+    }
+
+    if (result.length === 0) {
+      res.json({ message: 'Search not found', result });
+    } else {
+      res.json(result);
+    }
+  } catch (error) {
+    console.error('Error during search:', error);
+    res.status(500).json({ error: 'Error during search' });
+  }
+});
 
 
 module.exports = router;
