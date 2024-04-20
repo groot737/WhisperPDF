@@ -16,7 +16,7 @@ passport.use(
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
-        req.flash('error', 'Incorrect password.');
+
         return done(null, false, { message: 'Incorrect email or password.' });
       }
 
