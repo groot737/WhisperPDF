@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhisperPDF🚀</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles/index.css">
+</head>
+
+<body>
+    <div class="container text-center">
+        <div class="title display-4">WhisperPDF🚀</div>
+        <div class="minitext">Open source pdf book library.</div>
+        <form action="/book/search" method="post" class="search-container">
+            <input type="text" name="title" class="form-control search-bar" placeholder="Search...">
+            <button type="submit" class="btn btn-primary search-button">Search</button>
+        </form>          
+        <div class="books-block">
+            <div class="top-box">
+                <h3>Recent books</h3>
+                <hr>
+            </div>
+            <div class="items">
+                <% books.forEach(element => { %>
+                   <div class="item">
+                    <a href="/book/id/<%= element['id'] %>"></a>
+                    <img src="<%= element['cover_url'] %>" alt="">
+                   </div>
+                <% }) %>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
