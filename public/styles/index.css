@@ -1,0 +1,73 @@
+body {
+    background: #F6FAFA;
+    margin-top: 126px;
+}
+
+.title {
+    font-weight: bold;
+}
+
+.minitext {
+    font-size: 14px;
+    font-weight: normal;
+    margin-bottom: 38px; 
+}
+
+.search-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px; 
+    gap: 20px; 
+}
+
+.search-bar {
+    height: 48px; /* Same height as the button */
+    font-size: 16px;
+}
+
+.search-button {
+    height: 48px;
+    font-size: 18px;
+    font-weight: 500;
+}
+.books-block{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+.top-box{
+    margin-top: 80px;
+    display: grid;
+    grid-template-columns: auto;
+    justify-items: left;
+}
+hr{
+    width: 1141px;
+    height: 2px;
+    background-color: #49AFD0;
+}
+.items{
+    display: grid;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.item{
+    display: grid;
+    grid-template-columns: auto;
+    position: relative;
+}
+
+.item > img{
+    width: 180px;
+    height: 255px;
+    object-fit: cover;
+}
+
+.item > a {
+    position: absolute;
+    z-index: 9999;
+    width: 100%;
+    height: 255px;
+}

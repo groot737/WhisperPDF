@@ -1,0 +1,38 @@
+body {
+  margin: 0;
+  line-height: normal;
+}
+
+:root {
+  /* fonts */
+  --body-large-regular: Poppins;
+
+  /* font sizes */
+  --body-large-regular-size: 16px;
+  --body-medium-regular-size: 14px;
+  --heading-size: 28px;
+
+  /* Colors */
+  --foreground-oncolor: #fcfcfc;
+  --foreground-high: #fafafa;
+  --container-primary-low: #26272b;
+  --background-mode: rgba(19, 19, 22, 0.8);
+  --foreground-primary: #a0a0ab;
+  --foreground-low: #70707b;
+  --container-primary: #1570ef;
+  --outline-default: #3f3f46;
+  --foreground-default: #d1d1d6;
+
+  /* Gaps */
+  --gap-base: 16px;
+  --gap-5xs: 8px;
+  --gap-xs: 12px;
+  --gap-8xs: 5px;
+
+  /* Paddings */
+  --padding-xl: 20px;
+  --padding-base: 16px;
+
+  /* Border radiuses */
+  --br-5xs: 8px;
+}
