@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Details</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        .book-details {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .book-cover img {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .book-info {
+            margin-bottom: 20px;
+        }
+
+        .book-info h2 {
+            margin-bottom: 10px;
+        }
+
+        .book-description {
+            margin-bottom: 20px;
+        }
+
+        .download-button {
+            margin-top: 20px;
+        }
+
+        @media (max-width: 576px) {
+            .book-cover img {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container book-details">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="book-cover">
+                    <img src="<%= book.cover_url%>" alt="Book Cover">
+                </div>
+                <div class="text-center">
+                    <a href="<%= book.pdf_url%>" class="btn btn-primary download-button" download>Download PDF</a>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="book-info">
+                    <h2>Title: <%= book.title%></h2>
+                    <p><strong>Author:</strong><%= book.author_name%></p>
+                    <p><strong>Publisher:</strong><%= book.publisher%></p>
+                    <p><strong>Language:</strong> <%= book.language%></p>
+                    <p><strong>Year:</strong> <%= book.year%></p>
+                    <p><strong>Edition:</strong> <%= book.edition%></p>
+                </div>
+                <div class="book-description">
+                    <h3>Description:</h3>
+                    <p><%=  book.description%></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>
