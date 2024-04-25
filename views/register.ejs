@@ -59,11 +59,10 @@
                 <div class="frame-container">
                     <div class="password-parent">
                         <div class="password">Password</div>
-                        <a href="forgot" class="forgot">Forgot?</a>
                     </div>
                     <div class="input">
                         <div class="input-text1">
-                            <input name="password" class="context" placeholder="Enter your password" type="password" />
+                            <input id="passwordInput" name="password" class="context" placeholder="Enter your password" type="password" />
 
                             <div class="iconeye-wrapper" id="eyeBtn">
                                 <img class="iconeye1" alt="" src="/auth/images/iconeye.svg" />
@@ -86,10 +85,9 @@
 </body>
 <script>
     document.getElementById('eyeBtn').addEventListener('click', () => {
-        const inputField = document.getElementsByTagName('input')[1];
-        inputField.type = inputField.type === 'password' ? 'text' : 'password';
+        const passwordInput = document.getElementById('passwordInput');
+        passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
     });
-
 </script>
 
 </html>
