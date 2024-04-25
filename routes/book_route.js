@@ -69,7 +69,7 @@ router.get('/id/:id', async (req, res) => {
       where: { id: parseInt(req.params.id) },
     });
     if (book) {
-      res.json({ book, isExist: true });
+      res.render('book', {book})
     } else {
       res.status(404).json({ isExist: false });
     }

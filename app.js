@@ -1,12 +1,14 @@
-const express = require('express')
-const app = express()
-const mainRoute = require('./routes/web_route.js')
-const ejs = require('ejs')
+const express          = require('express')
+const app              = express()
+const mainRoute        = require('./routes/web_route.js')
+const bookRoute        = require('./routes/book_route.js')
+const userRoute        = require('./routes/user_route.js')
+const ejs              = require('ejs')
 const { PrismaClient } = require('@prisma/client');
-const session = require('express-session')
-const passport =require('passport')
-const flash = require('express-flash');
-const prisma = new PrismaClient();
+const session          = require('express-session')
+const passport         =require('passport')
+const flash            = require('express-flash');
+const prisma           = new PrismaClient();
 
 app.use(express.json())
 app.set('view engine', 'ejs')
@@ -19,7 +21,9 @@ app.use(passport.session());
 app.use(flash());
 
 // routes
-app.use('/', mainRoute)
+app.use('/', mainRoute, userRoute)
+app.use('/book', bookRoute)
+
 
 // listen server
 app.listen(3000)
