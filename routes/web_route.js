@@ -15,6 +15,7 @@ const { uploadToS3 } = require('../config/cloudfunction/uploads3')
 const fetch = require('isomorphic-fetch')
 const upload = multer({ dest: 'uploads/' });
 const {transporter, emailOption} = require('../config/nodemailer-config')
+const {verifyMiddleware} = require('../controllers/checkverify')
 require('dotenv').config();
 
 router.get('/', async (req, res) => {
@@ -57,7 +58,7 @@ router.get('/register', authMiddleware, (req, res) => {
 });
 
 // dashboard endpoint
-router.get('/dashboard', adminMiddleware, async (req, res) => {
+router.get('/dashboard', adminMiddleware, verifyMiddleware, async (req, res) => {
   const currentUrl = `${req.protocol}://${req.get('host')}`;
 
   try {
@@ -137,5 +138,35 @@ router.post('/change-password', async (req, res) => {
       res.status(500).send('Internal Server Error');
   }
 });
+
+// ============ EMAIL VERIFY ========================
+router.get('/activate/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const user = await prisma.users.findUnique({
+      where: { session_id: id }
+    });
+
+    if (!user) {
+      return res.send('User not found');
+    }
+
+    await prisma.users.update({
+      where: { id: user.id },
+      data: { isVerified: true }
+    });
+
+    req.login(user, (err) => {
+      if (err) {
+        return res.send('404');
+      }
+      res.redirect('/dashboard');
+    });
+  } catch (error) {
+    console.error('Error activating user:', error);
+    res.send('Internal server error');
+  }
+});
+
 
 module.exports = router;
