@@ -1,3 +1,4 @@
+
 // if user is not authorized, redirect to login
 const adminMiddleware = (req, res, next) => {
     if (req.isAuthenticated()) {
