@@ -12,6 +12,7 @@ const multer = require('multer');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { uploadToS3 } = require('../config/cloudfunction/uploads3')
+const {transporter, emailOption} = require('../config/nodemailer-config')
 require('dotenv').config();
 
 const upload = multer({ dest: 'uploads/' });
@@ -28,31 +29,36 @@ router.post('/register', async (req, res) => {
 
         if (existingUser) {
             req.flash('error', 'User with that email already exists.');
-            res.redirect('/register');
-        } else {
-            const newUser = await createUser(full_name, email, password);
-
-            createUserFolders(newUser.id)
-                .then(() => {
-                    req.login(newUser, (err) => {
-                        if (err) {
-                            return next(err);
-                        }
-                        res.redirect('/dashboard');
-                    });
-                })
-                .catch((err) => {
-                    console.error('Error creating user folders:', err);
-                    req.flash('error', 'Internal server error.');
-                    res.redirect('/register');
-                });
+            return res.redirect('/register');
         }
+
+        const newUser = await createUser(full_name, email, password);
+
+        createUserFolders(newUser.id)
+            .then(async () => {
+                await prisma.users.update({
+                    where: { email: email },
+                    data: { session_id: req.sessionID }
+                });
+                emailOption['subject'] = 'Email activation'
+                emailOption['to'] = email
+                emailOption['text'] = `Your email activation: ${req.protocol}://${req.get('host')}/activate/${req.sessionID}`
+
+                transporter.sendMail(emailOption);
+                res.send('Activate your email to finish registration.');
+            })
+            .catch((err) => {
+                console.error('Error creating user folders:', err);
+                req.flash('error', 'Internal server error.');
+                res.redirect('/register');
+            });
     } catch (error) {
         console.error('Error registering user:', error);
         req.flash('error', 'Internal server error.');
         res.redirect('/register');
     }
 });
+
 
 //================ READ  =========================//
 router.get('/user-data/:id', async (req, res) => {
