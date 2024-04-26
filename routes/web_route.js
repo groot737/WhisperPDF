@@ -14,6 +14,7 @@ const { v4: uuidv4 } = require('uuid');
 const { uploadToS3 } = require('../config/cloudfunction/uploads3')
 const fetch = require('isomorphic-fetch')
 const upload = multer({ dest: 'uploads/' });
+const {transporter, emailOption} = require('../config/nodemailer-config')
 require('dotenv').config();
 
 router.get('/', async (req, res) => {
@@ -78,5 +79,63 @@ router.get('/dashboard', adminMiddleware, async (req, res) => {
 router.get('/upload-book', adminMiddleware, (req, res) => {
   res.render('pdf')
 })
+
+// ============ PASSWORD FORGET ====================
+router.get('/forget', (req, res) => {
+  res.render('recovery/forget')
+})
+
+router.post('/forget', async(req, res) => {
+  const {email} = req.body
+  const user = await prisma.users.findUnique({
+    where: {email: email}
+  })
+  if(user){
+    const id = req.sessionID
+    await prisma.users.update({
+      where: {id: user['id']},
+      data: {session_id: id}
+    })
+    emailOption['to'] = user.email
+    emailOption['subject'] = 'Recover password'
+    emailOption['text'] = `${req.protocol}://${req.get('host')}/forget/${id}`
+    transporter.sendMail(emailOption)
+  } else {
+    res.send('user does not exist')
+  }
+})
+
+router.get('/forget/:id', async (req, res) => {
+  try {
+      const user = await prisma.users.findFirst({
+          where: { session_id: req.params.id },
+      });
+
+      if (user) {
+          res.render('recovery/change_password');
+      } else {
+          res.send('User does not exist');
+      }
+  } catch (error) {
+      console.error('Error retrieving user:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+router.post('/change-password', async (req, res) => {
+  try {
+      let { password,id } = req.body;
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await prisma.users.update({
+          where: { session_id: id },
+          data: { password: hashedPassword, session_id: null },
+      });
+      res.send('Password changed successfully');
+  } catch (error) {
+      console.error('Error changing password:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
 
 module.exports = router;
