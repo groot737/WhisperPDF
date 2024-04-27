@@ -50,7 +50,7 @@
                 <div class="frame-container">
                     <div class="password-parent">
                         <div class="password">Password</div>
-                        <a href="forgot" class="forgot">Forgot?</a>
+                        <a href="/forget" class="forgot">Forgot?</a>
                     </div>
                     <div class="input">
                         <div class="input-text1">
@@ -76,11 +76,16 @@
     </div>
 </body>
 <script>
+    const button = document.querySelector('.login-button');
+
     document.getElementById('eyeBtn').addEventListener('click', () => {
-        const inputField = document.getElementsByTagName('input')[1];
+        const inputField = document.querySelector('.input-text1 input');
         inputField.type = inputField.type === 'password' ? 'text' : 'password';
     });
 
+    button.addEventListener('click', (event) => {
+        event.preventDefault();
+        window.location.replace('http://localhost:3000/auth/google');
+    });
 </script>
-
 </html>

@@ -42,51 +42,59 @@
                             <input name="full_name" class="eye-icon" placeholder="John Doe" type="text" />
                         </div>
                     </div>
-                <div class="frame-group">
-                    <div class="email-wrapper">
-                        <div class="email">Email</div>
-                    </div>
-                    <div class="input-text-wrapper">
-                        <div class="input-text">
-                            <input name="email" class="eye-icon" placeholder="balamia@gmail.com" type="text" />
+                    <div class="frame-group">
+                        <div class="email-wrapper">
+                            <div class="email">Email</div>
+                        </div>
+                        <div class="input-text-wrapper">
+                            <div class="input-text">
+                                <input name="email" class="eye-icon" placeholder="balamia@gmail.com" type="text" />
 
-                            <div class="login-button1">
-                                <img class="iconeye" alt="" src="/auth/images/iconeye.svg" />
+                                <div class="login-button1">
+                                    <img class="iconeye" alt="" src="/auth/images/iconeye.svg" />
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="frame-container">
-                    <div class="password-parent">
-                        <div class="password">Password</div>
-                    </div>
-                    <div class="input">
-                        <div class="input-text1">
-                            <input id="passwordInput" name="password" class="context" placeholder="Enter your password" type="password" />
+                    <div class="frame-container">
+                        <div class="password-parent">
+                            <div class="password">Password</div>
+                        </div>
+                        <div class="input">
+                            <div class="input-text1">
+                                <input id="passwordInput" name="password" class="context"
+                                    placeholder="Enter your password" type="password" />
 
-                            <div class="iconeye-wrapper" id="eyeBtn">
-                                <img class="iconeye1" alt="" src="/auth/images/iconeye.svg" />
+                                <div class="iconeye-wrapper" id="eyeBtn">
+                                    <img class="iconeye1" alt="" src="/auth/images/iconeye.svg" />
+                                </div>
                             </div>
                         </div>
                     </div>
+                    <button class="button2">
+                        <div class="login-now2">Create account</div>
+                    </button>
                 </div>
-                <button class="button2">
-                    <div class="login-now2">Create account</div>
-                </button>
-            </div>
-            <div class="form-inner">
-                <div class="already-have-an-account-parent">
-                    <div class="already-have-an">have an account ?</div>
-                    <a href="/login" class="log-in">login</a>
+                <div class="form-inner">
+                    <div class="already-have-an-account-parent">
+                        <div class="already-have-an">have an account ?</div>
+                        <a href="/login" class="log-in">login</a>
+                    </div>
                 </div>
-            </div>
         </form>
     </div>
 </body>
 <script>
+    const button = document.querySelector('.login-button');
+
     document.getElementById('eyeBtn').addEventListener('click', () => {
-        const passwordInput = document.getElementById('passwordInput');
-        passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+        const inputField = document.querySelector('.input-text1 input');
+        inputField.type = inputField.type === 'password' ? 'text' : 'password';
+    });
+
+    button.addEventListener('click', (event) => {
+        event.preventDefault();
+        window.location.replace('http://localhost:3000/auth/google');
     });
 </script>
 
