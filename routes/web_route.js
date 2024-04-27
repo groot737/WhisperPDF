@@ -168,5 +168,15 @@ router.get('/activate/:id', async (req, res) => {
   }
 });
 
+//  =============== AUTHORIZE USER WITH GOOGLE OAUTH =================
+router.get('/auth/google/', passport.authenticate('google', {
+  scope: ['profile', 'email'],
+  prompt: 'select_account'
+}));
+
+router.get('/auth/google/callback', passport.authenticate('google', {
+  successRedirect: '/dashboard', 
+  failureRedirect: '/register'  
+}));
 
 module.exports = router;
