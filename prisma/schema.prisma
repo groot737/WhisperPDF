@@ -29,6 +29,7 @@ model users {
   pdfBooks    PdfBook[]
   session_id    String? @unique
   isVerified Boolean @default(false)
+  securityEnabled Boolean @default(false)
 }
 
 model PdfBook {
