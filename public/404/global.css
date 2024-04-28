@@ -1,0 +1,22 @@
+body {
+    margin: 0;
+    line-height: normal;
+  }
+  
+  :root {
+    /* fonts */
+    --font-poppins: Poppins;
+    --font-rubik: Rubik;
+  
+    /* Colors */
+    --color-chocolate-100: #fb8133;
+    --color-chocolate-200: #c74f00;
+  
+    /* Paddings */
+    --padding-xl: 20px;
+    --padding-3xs: 10px;
+  
+    /* Border radiuses */
+    --br-11xl: 30px;
+  }
+  
