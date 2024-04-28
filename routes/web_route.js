@@ -16,6 +16,7 @@ const fetch = require('isomorphic-fetch')
 const upload = multer({ dest: 'uploads/' });
 const {transporter, emailOption} = require('../config/nodemailer-config')
 const {verifyMiddleware} = require('../controllers/checkverify')
+const {securityMiddleware} = require('../controllers/checksecurity')
 require('dotenv').config();
 
 router.get('/', async (req, res) => {
@@ -58,7 +59,7 @@ router.get('/register', authMiddleware, (req, res) => {
 });
 
 // dashboard endpoint
-router.get('/dashboard', adminMiddleware, verifyMiddleware, async (req, res) => {
+router.get('/dashboard', adminMiddleware, verifyMiddleware, securityMiddleware, async (req, res) => {
   const currentUrl = `${req.protocol}://${req.get('host')}`;
 
   try {
@@ -158,7 +159,7 @@ router.get('/activate/:id', async (req, res) => {
 
     req.login(user, (err) => {
       if (err) {
-        return res.send('404');
+        return res.render('404');
       }
       res.redirect('/dashboard');
     });
@@ -179,4 +180,8 @@ router.get('/auth/google/callback', passport.authenticate('google', {
   failureRedirect: '/register'  
 }));
 
+// ================ HANDLE NON MATCHING PAGES ====================//
+router.use((req, res, next) => { 
+  res.render('404')
+}) 
 module.exports = router;
