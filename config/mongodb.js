@@ -17,7 +17,7 @@ const dataSchema =  new mongoose.Schema({
         type: String
     },
     allowance: {
-        type: Boolean
+        type: String
     }
 })
 
