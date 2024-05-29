@@ -7,11 +7,8 @@ const dataSchema =  new mongoose.Schema({
     userId: {
         type: String
     },
-    deviceName: {
+    deviceInfo: {
         type: String,
-    },
-    browserName: {
-        type: String
     },
     ipAddress: {
         type: String
@@ -22,4 +19,4 @@ const dataSchema =  new mongoose.Schema({
 })
 
 const User = mongoose.model('User', dataSchema)
-module.exports = {dataSchema}
+module.exports = {User}
