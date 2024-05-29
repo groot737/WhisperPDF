@@ -1,14 +1,17 @@
 const mongoose  = require('mongoose')
 
-const dataSchema =  new mongoose.Schema({
+const dataSchema = new mongoose.Schema({
     sessionId: {
         type: String,
     },
     userId: {
         type: String
     },
-    deviceInfo: {
+    deviceName: {
         type: String,
+    },
+    browserName: {
+        type: String
     },
     ipAddress: {
         type: String
@@ -16,7 +19,9 @@ const dataSchema =  new mongoose.Schema({
     allowance: {
         type: String
     }
-})
+}, {
+    timestamps: true 
+});
 
 const User = mongoose.model('User', dataSchema)
 module.exports = {User}
