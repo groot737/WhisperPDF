@@ -16,6 +16,9 @@ const dataSchema = new mongoose.Schema({
     ipAddress: {
         type: String
     },
+    requestCode: {
+        type: String
+    },
     allowance: {
         type: String
     }
