@@ -7,7 +7,7 @@ const bcrypt = require('bcrypt');
 const passport = require('../config/passport-config');
 const { createUserFolders, s3 } = require('../config/cloudfunction/createUserFolder');
 const AWS = require('aws-sdk');
-const { authMiddleware, adminMiddleware, testing, testingx2 } = require('../controllers/checkuser');
+const { authMiddleware, adminMiddleware, securityMiddleware } = require('../controllers/checkuser');
 const multer = require('multer');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
@@ -40,7 +40,7 @@ router.get("/login", authMiddleware, (req, res) => {
   res.render('login');
 });
 
-router.post('/login', testing);
+router.post('/login', securityMiddleware);
 
 // LOG OUT USER
 router.post('/logout', function (req, res, next) {
