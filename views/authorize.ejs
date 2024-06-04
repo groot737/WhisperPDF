@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>authorize user</h1>
+    <% if(typeof data !== 'undefined') { %>
+        <p>device info: <%= data["deviceName"] %></p>
+        <p>ip address: <%= data['ipAddress'] %></p>
+        <form id="trueFalseForm" action="/authorize" method="POST">
+            <button type="button" onclick="sendValue(true)">Accept</button>
+            <button type="button" onclick="sendValue(false)">decline</button>
+            <input type="text" name="currentId" id="currentId" hidden>
+        </form>
+    <% } else{ %>
+        <script>alert(`<%= message %>`); window.location.href='/'</script>
+    <% } %>
+</body>
+<script>
+    function sendValue(value) {
+        document.getElementById('currentId').value =  window.location.href.split('/').pop()
+        const form = document.getElementById('trueFalseForm');
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'value';
+        input.value = value;
+        form.appendChild(input);
+        form.submit();
+    }
+</script>
+</html>
