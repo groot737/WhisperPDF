@@ -27,7 +27,7 @@ const authMiddleware = (req, res, next) => {
   }
 }
 
-const testing = async (req, res, next) => {
+const securityMiddleware = async (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
 
@@ -98,4 +98,4 @@ const testing = async (req, res, next) => {
   }
 };
 
-module.exports = { authMiddleware, adminMiddleware, testing };
+module.exports = { authMiddleware, adminMiddleware, securityMiddleware };
