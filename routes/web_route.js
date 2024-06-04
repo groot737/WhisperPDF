@@ -7,17 +7,23 @@ const bcrypt = require('bcrypt');
 const passport = require('../config/passport-config');
 const { createUserFolders, s3 } = require('../config/cloudfunction/createUserFolder');
 const AWS = require('aws-sdk');
-const { authMiddleware, adminMiddleware } = require('../controllers/checkuser');
+const { authMiddleware, adminMiddleware, testing, testingx2 } = require('../controllers/checkuser');
 const multer = require('multer');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { uploadToS3 } = require('../config/cloudfunction/uploads3')
 const fetch = require('isomorphic-fetch')
 const upload = multer({ dest: 'uploads/' });
-const {transporter, emailOption} = require('../config/nodemailer-config')
-const {verifyMiddleware} = require('../controllers/checkverify')
-const {securityMiddleware} = require('../controllers/checksecurity')
+const { transporter, emailOption } = require('../config/nodemailer-config')
+const { verifyMiddleware } = require('../controllers/checkverify')
+const mongoose = require('mongoose')
+const { User } = require('../config/mongodb')
+const io = global.io;
+let global_session_id = "";
 require('dotenv').config();
+
+mongoose.connect(`${process.env.mongodb_url}`)
+  .then(console.log('connected successfully'))
 
 router.get('/', async (req, res) => {
   try {
@@ -34,14 +40,7 @@ router.get("/login", authMiddleware, (req, res) => {
   res.render('login');
 });
 
-router.post(
-  '/login',
-  passport.authenticate('local', {
-    successRedirect: '/dashboard',
-    failureRedirect: '/login',
-    failureFlash: true
-  })
-);
+router.post('/login', testing);
 
 // LOG OUT USER
 router.post('/logout', function (req, res, next) {
@@ -59,7 +58,7 @@ router.get('/register', authMiddleware, (req, res) => {
 });
 
 // dashboard endpoint
-router.get('/dashboard', adminMiddleware, verifyMiddleware, securityMiddleware, async (req, res) => {
+router.get('/dashboard', adminMiddleware, verifyMiddleware, async (req, res) => {
   const currentUrl = `${req.protocol}://${req.get('host')}`;
 
   try {
@@ -87,16 +86,16 @@ router.get('/forget', (req, res) => {
   res.render('recovery/forget')
 })
 
-router.post('/forget', async(req, res) => {
-  const {email} = req.body
+router.post('/forget', async (req, res) => {
+  const { email } = req.body
   const user = await prisma.users.findUnique({
-    where: {email: email}
+    where: { email: email }
   })
-  if(user){
+  if (user) {
     const id = req.sessionID
     await prisma.users.update({
-      where: {id: user['id']},
-      data: {session_id: id}
+      where: { id: user['id'] },
+      data: { session_id: id }
     })
     emailOption['to'] = user.email
     emailOption['subject'] = 'Recover password'
@@ -109,34 +108,34 @@ router.post('/forget', async(req, res) => {
 
 router.get('/forget/:id', async (req, res) => {
   try {
-      const user = await prisma.users.findFirst({
-          where: { session_id: req.params.id },
-      });
+    const user = await prisma.users.findFirst({
+      where: { session_id: req.params.id },
+    });
 
-      if (user) {
-          res.render('recovery/change_password');
-      } else {
-          res.send('User does not exist');
-      }
+    if (user) {
+      res.render('recovery/change_password');
+    } else {
+      res.send('User does not exist');
+    }
   } catch (error) {
-      console.error('Error retrieving user:', error);
-      res.status(500).send('Internal Server Error');
+    console.error('Error retrieving user:', error);
+    res.status(500).send('Internal Server Error');
   }
 });
 
 router.post('/change-password', async (req, res) => {
   try {
-      let { password,id } = req.body;
-      const hashedPassword = await bcrypt.hash(password, 10);
+    let { password, id } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-      await prisma.users.update({
-          where: { session_id: id },
-          data: { password: hashedPassword, session_id: null },
-      });
-      res.send('Password changed successfully');
+    await prisma.users.update({
+      where: { session_id: id },
+      data: { password: hashedPassword, session_id: null },
+    });
+    res.send('Password changed successfully');
   } catch (error) {
-      console.error('Error changing password:', error);
-      res.status(500).send('Internal Server Error');
+    console.error('Error changing password:', error);
+    res.status(500).send('Internal Server Error');
   }
 });
 
@@ -176,12 +175,108 @@ router.get('/auth/google/', passport.authenticate('google', {
 }));
 
 router.get('/auth/google/callback', passport.authenticate('google', {
-  successRedirect: '/dashboard', 
-  failureRedirect: '/register'  
+  successRedirect: '/dashboard',
+  failureRedirect: '/register'
 }));
 
+//  =============== REALTIME USER REDIRECT =================
+router.get('/wait', (req, res) => {
+  io.on('connection', (socket) => {
+    const changeStream = User.watch();
+
+    changeStream.on('change', async (change) => {
+
+      if (change.operationType === 'update') {
+
+        const updatedUser = await User.findById(change.documentKey._id);
+
+        if (updatedUser.sessionId === req.sessionID) {
+
+          if (updatedUser.allowance === 'allow') {
+            console.log('allowed')
+            socket.emit("result", { redirect: true })
+          } else if (updatedUser.allowance === 'disable') {
+            socket.emit("result", { redirect: false})
+          }
+
+        }
+      }
+    });
+  })
+  res.render('wait.ejs')
+})
+
+router.post('/wait', async (req, res, next) => {
+  const id = req.body.id;
+
+  try {
+    const user = await User.findOne({ sessionId: id });
+    if (!user) {
+      console.log('User not found');
+      res.redirect('/login')
+    }
+
+    const owner = await prisma.users.findUnique({
+      where: {
+        id: parseInt(user.userId)
+      }
+    });
+
+    req.logIn(owner, (err) => {
+      if (err) {
+        console.error('Error during login:', err);
+        return res.redirect('/login');
+      }
+      // Authentication succeeded
+      return res.redirect('/dashboard');
+    });
+
+  } catch (err) {
+    console.error('Error:', err);
+    return res.status(500).send('Error occurred');
+  }
+});
+
+router.get('/authorize/:id', async (req, res, next) => {
+  const id = req.params.id; 
+  try {
+      const user = await User.findOne({ requestCode: id });
+      if (!user) {
+          console.log('User not found');
+          return res.redirect('/');
+      }
+      const data = {"ipAddress": user['ipAddress'], "deviceName": user["deviceName"]};
+      return res.render('authorize', { data });
+  } catch (err) {
+      console.error('Error:', err);
+      return res.status(500).send('Error occurred');
+  }
+});
+
+router.post('/authorize', async (req, res) => {
+  try {
+      let update;
+      if (req.body.value === "true") {
+          update = { allowance: 'allow' };
+          await User.findOneAndUpdate({ requestCode: req.body.currentId }, update, { new: true });
+          res.render('authorize', { message: "Request accepted" });
+      } else if (req.body.value === "false") {
+          update = { allowance: 'disable' };
+          await User.findOneAndUpdate({ requestCode: req.body.currentId }, update, { new: true });
+          res.render('authorize', { message: "Request declined" });
+      } else {
+          res.redirect('/404');
+      }
+  } catch (err) {
+      console.error(err);
+      res.redirect('/404');
+  }
+});
+
+
 // ================ HANDLE NON MATCHING PAGES ====================//
-router.use((req, res, next) => { 
-  res.render('404')
-}) 
+// router.use((req, res, next) => { 
+//   res.render('404')
+// }) 
+
 module.exports = router;
