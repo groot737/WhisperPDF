@@ -28,7 +28,6 @@ app.use(flash());
 
 app.use('/', mainRoute, userRoute);
 app.use('/book', bookRoute);
-
 // Start the server using server.listen, not app.listen
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
