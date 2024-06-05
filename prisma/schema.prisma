@@ -30,6 +30,7 @@ model users {
   session_id    String? @unique
   isVerified Boolean @default(false)
   securityEnabled Boolean @default(false)
+  reviews      Review[]
 }
 
 model PdfBook {
@@ -47,6 +48,16 @@ model PdfBook {
   description  String?
   uploader     users?     @relation(fields: [uploader_id], references: [id])
   uploader_id  Int?
+  reviews      Review[]
 }
 
-
+model Review {
+  id          Int      @id @default(autoincrement())
+  book_id     Int
+  user_id     Int
+  rating      Int
+  description String
+  created_at  DateTime @default(now())
+  book        PdfBook  @relation(fields: [book_id], references: [id])
+  user        users    @relation(fields: [user_id], references: [id])
+}
