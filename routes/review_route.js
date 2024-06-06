@@ -9,7 +9,8 @@ require('dotenv').config();
 
 //create
 router.post('/add', async (req, res) => {
-    const { rating, description, bookId } = req.body;
+    if(req.isAuthenticated()){
+        const { rating, description, bookId } = req.body;
     try {
         const book = await prisma.pdfBook.findUnique({
             where: { id: +bookId }
@@ -29,6 +30,9 @@ router.post('/add', async (req, res) => {
     } catch (error) {
         console.error("Error adding review:", error);
         res.status(500).json({ message: "Error occurred while adding review" });
+    }
+    } else{
+        res.status(401).json({message: "you should log in to account"})
     }
 });
 
@@ -80,6 +84,7 @@ router.get('/:id', async (req, res) => {
 
 // update
 router.patch('/update', async(req, res) =>{
+   if(req.isAuthenticated){
     const reviewId = +req.body.reviewId; 
     const { description } = req.body;
 
@@ -106,11 +111,15 @@ router.patch('/update', async(req, res) =>{
         console.error('Error updating review:', error);
         res.status(500).json({ message: 'Error occurred while updating review' });
     }
+   } else {
+    res.status(401).json({message: "you should log in to account"})
+   }
 })
 
 // delete 
 router.delete('/delete', async (req, res) => {
-    const { reviewId } = req.body;
+    if(req.isAuthenticated()){
+        const { reviewId } = req.body;
     try {
         const deletedReview = await prisma.Review.delete({
             where: { id: +reviewId }
@@ -122,6 +131,9 @@ router.delete('/delete', async (req, res) => {
     } catch (error) {
         console.error("Error deleting review:", error);
         res.status(500).json({ message: "Error occurred while deleting review" });
+    }
+    } else{
+        res.status(401).json({message: "you should log in to account"})
     }
 });
 
