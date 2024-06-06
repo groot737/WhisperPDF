@@ -16,6 +16,7 @@ const mainRoute             = require('./routes/web_route.js');
 const bookRoute             = require('./routes/book_route.js');
 const userRoute             = require('./routes/user_route.js');
 const reviewRoute           = require('./routes/review_route.js')
+const favouritesRoute       = require('./routes/favuorites_route')
 
 app.use(express.json());
 app.set('view engine', 'ejs');
@@ -29,7 +30,8 @@ app.use(flash());
 
 app.use('/', mainRoute, userRoute);
 app.use('/book', bookRoute);
-app.use('/review', reviewRoute)
+app.use('/review', reviewRoute);
+app.use('/favourites', favouritesRoute)
 
 
 const PORT = process.env.PORT || 3000;
