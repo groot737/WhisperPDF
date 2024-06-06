@@ -31,6 +31,7 @@ model users {
   isVerified Boolean @default(false)
   securityEnabled Boolean @default(false)
   reviews      Review[]
+  Favourite    Favourite[]
 }
 
 model PdfBook {
@@ -49,6 +50,7 @@ model PdfBook {
   uploader     users?     @relation(fields: [uploader_id], references: [id])
   uploader_id  Int?
   reviews      Review[]
+  Favourite    Favourite[]
 }
 
 model Review {
@@ -59,5 +61,13 @@ model Review {
   description String
   created_at  DateTime @default(now())
   book        PdfBook  @relation(fields: [book_id], references: [id])
+  user        users    @relation(fields: [user_id], references: [id])
+}
+
+model Favourite {
+  id Int @id @default(autoincrement())
+  book_id     Int
+  user_id     Int
+  book       PdfBook  @relation(fields: [book_id], references: [id])
   user        users    @relation(fields: [user_id], references: [id])
 }
