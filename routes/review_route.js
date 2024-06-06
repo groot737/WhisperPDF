@@ -34,7 +34,49 @@ router.post('/add', async (req, res) => {
 
 
 // read
-router.get('/:id')
+router.get('/:id', async (req, res) => {
+    const bookId = parseInt(req.params.id);
+
+    try {
+        const reviews = await prisma.review.findMany({
+            where: { book_id: bookId }
+        });
+
+        if (reviews.length === 0) {
+            return res.status(404).json({ message: "No reviews found for this book" });
+        }
+
+        let data = [{total_review: 0, average_rating: 0}, []];
+        let counter = 0
+        let sum = 0
+        for (let j = 0; j < reviews.length; j++) {
+            reviews[j]['created_at'] = reviews[j].created_at.toISOString().slice(0, reviews[j].created_at.toISOString().indexOf('-') + 6);
+
+            // Fetch user data for each review
+            const user = await prisma.users.findUnique({
+                where: { id: reviews[j].user_id }
+            });
+
+            // Add username and profile_pic to the review
+            reviews[j]['username'] = user.full_name;
+            reviews[j]['profile_pic'] = user.profile_pic;
+            counter ++
+            sum += reviews[j].rating
+
+            data[1].push(reviews[j]);
+        }
+        data[0].total_review = counter
+        data[0].average_rating = parseFloat((sum / data[1].length).toFixed(2))
+
+        res.json(data);
+
+    } catch (error) {
+        console.error("Error fetching reviews:", error);
+        res.status(500).json({ message: "Error occurred" });
+    }
+});
+
+
 
 // update
 router.patch('/update', async(req, res) =>{
