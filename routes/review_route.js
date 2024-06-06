@@ -26,7 +26,7 @@ router.post('/add', async (req, res) => {
                     rating: +rating
                 }
             });
-            res.json("Review added");
+            res.status(200).json("Review added");
         } catch (error) {
             console.error("Error adding review:", error);
             res.status(500).json({ message: "Error occurred while adding review" });
@@ -72,7 +72,7 @@ router.get('/:id', async (req, res) => {
         data[0].total_review = counter
         data[0].average_rating = parseFloat((sum / data[1].length).toFixed(2))
 
-        res.json(data);
+        res.status(200).json(data);
 
     } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -106,7 +106,7 @@ router.patch('/update', async (req, res) => {
                 data: { description: description }
             });
 
-            res.json(updatedReview);
+            res.status(200).json(updatedReview);
         } catch (error) {
             console.error('Error updating review:', error);
             res.status(500).json({ message: 'Error occurred while updating review' });
@@ -127,7 +127,7 @@ router.delete('/delete', async (req, res) => {
             if (!deletedReview) {
                 return res.status(404).json({ message: "Review not found" });
             }
-            res.json({ message: "Review deleted" });
+            res.status(200).json({ message: "Review deleted" });
         } catch (error) {
             console.error("Error deleting review:", error);
             res.status(500).json({ message: "Error occurred while deleting review" });
