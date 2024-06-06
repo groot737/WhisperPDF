@@ -37,9 +37,51 @@ router.post('/add', async (req, res) => {
 router.get('/:id')
 
 // update
-router.get('/update/:id')
+router.patch('/update', async(req, res) =>{
+    const reviewId = +req.body.reviewId; 
+    const { description } = req.body;
+
+    if (!description) {
+        return res.status(400).json({ message: 'Description is required' });
+    }
+
+    try {
+        const existingReview = await prisma.review.findUnique({
+            where: { id: reviewId }
+        });
+
+        if (!existingReview) {
+            return res.status(404).json({ message: 'Review not found' });
+        }
+
+        const updatedReview = await prisma.review.update({
+            where: { id: reviewId },
+            data: { description: description }
+        });
+
+        res.json(updatedReview);
+    } catch (error) {
+        console.error('Error updating review:', error);
+        res.status(500).json({ message: 'Error occurred while updating review' });
+    }
+})
 
 // delete 
-router.get('/delete/:id')
+router.delete('/delete', async (req, res) => {
+    const { reviewId } = req.body;
+    try {
+        const deletedReview = await prisma.Review.delete({
+            where: { id: +reviewId }
+        });
+        if (!deletedReview) {
+            return res.status(404).json({ message: "Review not found" });
+        }
+        res.json({message: "Review deleted"});
+    } catch (error) {
+        console.error("Error deleting review:", error);
+        res.status(500).json({ message: "Error occurred while deleting review" });
+    }
+});
+
 
 module.exports = router;
