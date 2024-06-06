@@ -36,18 +36,55 @@ router.post('/add', async (req, res) => {
 
 
 // Read
-router.get('/:id', async(req, res) => {
-    if(req.isAuthenticated()){
-        //
-    } else{
-        res.status(401).json({ message: "you should log in to account" })
+router.get('/', async (req, res) => {
+    if (req.isAuthenticated()) {
+        const userId = req.user.id
+        try {
+            const favourites = await prisma.favourite.findMany({
+                where: { user_id: userId }
+            });
+            if (!favourites || favourites.length === 0) {
+                return res.status(404).json({ message: "Favourite books list is empty" });
+            }
+            let data = { total: favourites.length, books: [] };
+
+            for (let i = 0; i < favourites.length; i++) {
+                const book = await prisma.pdfBook.findUnique({
+                    where: { id: favourites[i].book_id }
+                });
+                data.books.push({
+                    title: book.title,
+                    cover: book.cover_url,
+                    id: favourites[i].book_id
+                });
+            }
+            res.status(200).json(data);
+        } catch (error) {
+            console.error('Error occurred:', error);
+            res.status(500).json({ message: 'Error occurred while listing favourite books' });
+        }
+    } else {
+        res.status(401).json({ message: "You should log in to your account" });
     }
-})
+});
+
 
 // Delete
 router.delete('/delete', async(req, res) => {
     if(req.isAuthenticated()){
-        //
+        const { favouriteId } = req.body;
+        try {
+            const deletedFavourite = await prisma.Favourite.delete({
+                where: { id: +favouriteId }
+            });
+            if (!deletedFavourite) {
+                return res.status(404).json({ message: "Favourite book not found" });
+            }
+            res.status(200).json({ message: "Favourite book deleted" });
+        } catch (error) {
+            console.error("Error deleting favourite book:", error);
+            res.status(500).json({ message: "Error occurred while deleting favourite book" });
+        }
     } else{
         res.status(401).json({ message: "you should log in to account" })
     }
