@@ -17,6 +17,7 @@ model Category {
   id       Int      @id @default(autoincrement())
   name     String   @unique
   pdfBooks PdfBook[]
+  BookList BookList[]
 }
 
 model users {
@@ -24,14 +25,15 @@ model users {
   email       String    @unique
   password    String
   full_name   String
-  profile_pic String? @default("https://i.pinimg.com/474x/97/aa/84/97aa847d061a14894178805f1d551500.jpg")
-  about       String? @default("No bio yet.")
+  profile_pic String?   @default("https://i.pinimg.com/474x/97/aa/84/97aa847d061a14894178805f1d551500.jpg")
+  about       String?   @default("No bio yet.")
   pdfBooks    PdfBook[]
-  session_id    String? @unique
-  isVerified Boolean @default(false)
+  session_id  String?   @unique
+  isVerified  Boolean   @default(false)
   securityEnabled Boolean @default(false)
-  reviews      Review[]
-  Favourite    Favourite[]
+  reviews     Review[]
+  Favourite   Favourite[]
+  BookList    BookList[]
 }
 
 model PdfBook {
@@ -43,7 +45,8 @@ model PdfBook {
   category     Category? @relation(fields: [category_id], references: [id])
   category_id  Int?
   publisher    String
-  language     String
+  language     Language? @relation(fields: [language_id], references: [id])
+  language_id  String?
   year         Int
   edition      String
   description  String?
@@ -51,6 +54,7 @@ model PdfBook {
   uploader_id  Int?
   reviews      Review[]
   Favourite    Favourite[]
+  BookList     BookList[]
 }
 
 model Review {
@@ -65,9 +69,31 @@ model Review {
 }
 
 model Favourite {
-  id Int @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   book_id     Int
   user_id     Int
-  book       PdfBook  @relation(fields: [book_id], references: [id])
+  book        PdfBook  @relation(fields: [book_id], references: [id])
   user        users    @relation(fields: [user_id], references: [id])
+}
+
+model BookList {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  book_id     Int
+  user_id     Int
+  category_id Int      @default(0)
+  language_id String   @default("0")
+  isPrivate   Boolean  @default(false)
+  book        PdfBook  @relation(fields: [book_id], references: [id])
+  user        users    @relation(fields: [user_id], references: [id])
+  category    Category @relation(fields: [category_id], references: [id])
+  language    Language @relation(fields: [language_id], references: [id])
+}
+
+model Language {
+  id       String   @unique
+  name     String   @unique
+  BookList BookList[]
+  PdfBook  PdfBook[]
 }
