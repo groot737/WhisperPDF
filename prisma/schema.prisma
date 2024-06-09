@@ -62,6 +62,7 @@ model PdfBook {
   uploader_id  Int?
   reviews      Review[]
   Favourite    Favourite[]
+  BookList_books
 }
 
 
@@ -96,5 +97,14 @@ model BookList {
   user        users    @relation(fields: [user_id], references: [id])
   category    Category @relation(fields: [category_id], references: [id])
   language     languages? @relation(fields: [language_id], references: [id])
+  Booklist_books BookList_books []
 
+}
+
+model BookList_books {
+  id Int @id @default(autoincrement())
+  book_id Int
+  booklist_id Int
+  booklist BookList @relation(fields: [booklist_id], references[id])
+  book PdfBook @relation(fields: [book_id], references[id])
 }
