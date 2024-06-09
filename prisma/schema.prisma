@@ -36,6 +36,14 @@ model users {
   BookList    BookList[]
 }
 
+model languages {
+  id Int @id @default(autoincrement())
+  code String @unique
+  name String @unique
+  PdfBooks PdfBook[] 
+  BookList BookList[]
+}
+
 model PdfBook {
   id           Int       @id @default(autoincrement())
   cover_url    String?
@@ -44,9 +52,9 @@ model PdfBook {
   author_name  String
   category     Category? @relation(fields: [category_id], references: [id])
   category_id  Int?
+  language     languages? @relation(fields: [language_id], references: [id])
+  language_id  Int
   publisher    String
-  language     Language? @relation(fields: [language_id], references: [id])
-  language_id  String?
   year         Int
   edition      String
   description  String?
@@ -56,6 +64,8 @@ model PdfBook {
   Favourite    Favourite[]
   BookList     BookList[]
 }
+
+
 
 model Review {
   id          Int      @id @default(autoincrement())
@@ -83,17 +93,11 @@ model BookList {
   book_id     Int
   user_id     Int
   category_id Int      @default(0)
-  language_id String   @default("0")
+  language_id  Int @default(0)
   isPrivate   Boolean  @default(false)
   book        PdfBook  @relation(fields: [book_id], references: [id])
   user        users    @relation(fields: [user_id], references: [id])
   category    Category @relation(fields: [category_id], references: [id])
-  language    Language @relation(fields: [language_id], references: [id])
-}
+  language     languages? @relation(fields: [language_id], references: [id])
 
-model Language {
-  id       String   @unique
-  name     String   @unique
-  BookList BookList[]
-  PdfBook  PdfBook[]
 }
