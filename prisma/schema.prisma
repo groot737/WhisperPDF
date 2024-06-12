@@ -82,6 +82,7 @@ model Favourite {
   id          Int      @id @default(autoincrement())
   book_id     Int
   user_id     Int
+  type        String
   book        PdfBook  @relation(fields: [book_id], references: [id])
   user        users    @relation(fields: [user_id], references: [id])
 }
