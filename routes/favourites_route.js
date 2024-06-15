@@ -9,28 +9,51 @@ require('dotenv').config();
 
 // Create
 router.post('/add', async (req, res) => {
-    const { bookId } = req.body; 
+    const { itemId, itemType } = req.body; 
+
     if (req.isAuthenticated()) {
-        try {
-            const book = await prisma.pdfBook.findUnique({
-                where: { id: +bookId }
-            });
-            if (!book) {
-                return res.status(404).json({ message: "Book not found" });
+        return res.status(401).json({ message: "You should log in to your account" });
+    }
+
+    if (itemType !== 'book' && itemType !== 'booklist') {
+        return res.status(500).json({ message: "Error occurred" });
+    }
+
+    try {
+        // Check if item already exists in favourites
+        const existingFavourite = await prisma.favourite.findFirst({
+            where: {
+                item_id: +itemId,
+                user_id: +req.user.id,
+                type: itemType
             }
-            const favourite = await prisma.Favourite.create({
-                data: {
-                    book_id: +bookId,
-                    user_id: +req.user.id,
-                }
-            });
-            res.status(200).json({ message: "Book added to favourites" });
-        } catch (error) {
-            console.error("Error adding to favourites:", error);
-            res.status(500).json({ message: "Error occurred while adding to favourites" });
+        });
+
+        if (existingFavourite) {
+            return res.status(400).json({ message: `${itemType} is already in favourites` });
         }
-    } else {
-        res.status(401).json({ message: "You should log in to your account" });
+
+        const item = await (itemType === 'book' 
+            ? prisma.PdfBook.findUnique({ where: { id: +itemId } })
+            : prisma.bookList.findUnique({ where: { id: +itemId } })
+        );
+
+        if (!item) {
+            return res.status(404).json({ message: `${itemType} not found` });
+        }
+
+        await prisma.Favourite.create({
+            data: {
+                item_id: +itemId,
+                user_id: +req.user.id,
+                type: itemType
+            }
+        });
+
+        res.status(200).json({ message: `${itemType} added to favourites` });
+    } catch (error) {
+        console.error("Error adding to favourites:", error);
+        res.status(500).json({ message: "Error occurred while adding to favourites" });
     }
 });
 
@@ -41,22 +64,36 @@ router.get('/', async (req, res) => {
         const userId = req.user.id
         try {
             const favourites = await prisma.favourite.findMany({
-                where: { user_id: userId }
+                where: { user_id: +req.user.id }
             });
             if (!favourites || favourites.length === 0) {
                 return res.status(404).json({ message: "Favourite books list is empty" });
             }
-            let data = { total: favourites.length, books: [] };
 
-            for (let i = 0; i < favourites.length; i++) {
-                const book = await prisma.pdfBook.findUnique({
-                    where: { id: favourites[i].book_id }
-                });
-                data.books.push({
-                    title: book.title,
-                    cover: book.cover_url,
-                    id: favourites[i].book_id
-                });
+            let data = [{name: "Book", items: [], total: 0}, {name: "Book list", items:[], total: 0}];
+            let tempData = {}
+
+            for(let i = 0; i < favourites.length; i++){
+                if(favourites[i].type === "book"){
+
+                    const book = await prisma.pdfBook.findUnique({
+                        where: { id: favourites[i].item_id }
+                    });
+                    tempData['title'] = book['title']
+                    tempData['cover'] = book['cover']
+                    tempData['id'] = book['id']
+                    data[0].items.push(tempData)
+                    // count total
+                    data[0].total ++
+
+                } else {
+                    const booklist = await prisma.bookList.findUnique({
+                        where: { id: favourites[i].item_id }
+                    });
+                    data[1].items.push(booklist)
+                    // count total
+                    data[1].total ++
+                }
             }
             res.status(200).json(data);
         } catch (error) {
@@ -78,12 +115,12 @@ router.delete('/delete', async(req, res) => {
                 where: { id: +favouriteId }
             });
             if (!deletedFavourite) {
-                return res.status(404).json({ message: "Favourite book not found" });
+                return res.status(404).json({ message: "Not found" });
             }
-            res.status(200).json({ message: "Favourite book deleted" });
+            res.status(200).json({ message: "Deleted" });
         } catch (error) {
-            console.error("Error deleting favourite book:", error);
-            res.status(500).json({ message: "Error occurred while deleting favourite book" });
+            console.error("Error deleting favourite:", error);
+            res.status(500).json({ message: "Error occurred" });
         }
     } else{
         res.status(401).json({ message: "you should log in to account" })
