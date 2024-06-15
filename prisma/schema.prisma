@@ -55,14 +55,12 @@ model PdfBook {
   language     languages? @relation(fields: [language_id], references: [id])
   language_id  Int
   publisher    String
-  type         String
   year         Int
   edition      String
   description  String?
   uploader     users?     @relation(fields: [uploader_id], references: [id])
   uploader_id  Int?
   reviews      Review[]
-  Favourite    Favourite[]
   BookList_books BookList_books[]
 }
 
