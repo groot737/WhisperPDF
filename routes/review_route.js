@@ -47,7 +47,7 @@ router.get('/:id', async (req, res) => {
         });
 
         if (reviews.length === 0) {
-            return res.status(404).json({ message: "No reviews found for this book" });
+            return res.status(404).json([{average_rating: 0}, {message: "No reviews found for this book"}]);
         }
 
         let data = [{ total_review: 0, average_rating: 0 }, []];
@@ -98,7 +98,7 @@ router.patch('/update', async (req, res) => {
             });
 
             if (!existingReview) {
-                return res.status(404).json({ message: 'Review not found' });
+                return res.status(404).json({ message: 'Review not found'});
             }
 
             const updatedReview = await prisma.review.update({
