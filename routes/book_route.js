@@ -12,6 +12,7 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { uploadToS3 } = require('../config/cloudfunction/uploads3')
 const upload = multer({ dest: 'uploads/' });
+const fetch = require('isomorphic-fetch')
 require('dotenv').config();
 
 
@@ -69,7 +70,7 @@ router.get('/id/:id', async (req, res) => {
       where: { id: parseInt(req.params.id) },
     });
     if (book) {
-      res.render('book', {book})
+      res.render('book', { book })
     } else {
       res.status(404).json({ isExist: false });
     }
@@ -203,29 +204,121 @@ router.get('/list', adminMiddleware, async (req, res) => {
 });
 
 // ================== SEARCH ENDPOINT ========================
-router.post('/search', async (req, res) => {
-  const search = req.body.title.trim().toLowerCase();
-  const result = [];
+router.get('/search', async (req, res) => {
+  let { title, language, type, category, yearfrom, yearto } = req.query;
+  const validQuery = ["title", "language_id", "type", "category_id", "yearfrom", "yearto"];
+  let filteredQuery = {};
 
-  try {
-    const books = await prisma.pdfBook.findMany();
+  // set default value for type 
+  if (typeof type === "undefined") {
+    type = "book";
+  }
 
-    for (const book of books) {
-      const title = book['title'].trim().toLowerCase();
-      if (title.includes(search)) {
-        result.push(book);
+  if (typeof title === "undefined") {
+    title = "";
+  }
+
+  // add type and title to filtered query
+  filteredQuery['type'] = type;
+  filteredQuery['title'] = title.trim().toLowerCase();
+
+  // get other parameters
+  for (let data in req.query) {
+    // detect only correct parameters
+    if (validQuery.includes(data)) {
+      // filter detected parameters
+      if (data !== 'title' && data !== 'type' && !isNaN(+req.query[data]) && req.query[data] !== '') {
+        filteredQuery[data] = +req.query[data];
+      }
+    }
+  }
+
+  // if type is booklist remove non-required parameters
+  if (type === "booklist") {
+    delete filteredQuery.yearfrom;
+    delete filteredQuery.yearto;
+    delete filteredQuery.type;
+    filteredQuery['isPrivate'] = false;
+
+    const booklist = await prisma.bookList.findMany({
+      where: filteredQuery
+    });
+    for(let i = 0; i < booklist.length; i++){
+       // get category name via id
+      const category = await prisma.category.findUnique({
+        where: {id: +booklist[i]['category_id']}
+      })
+      booklist[i]['category'] = category['name']
+      // get language name via id
+      const language = await prisma.languages.findUnique({
+        where: { id: +booklist[i]['language_id'] }
+      })
+      booklist[i]['language'] = language['name']
+      // get username via id
+      const user = await prisma.users.findUnique({
+        where: { id: +booklist[i]["user_id"] }
+      })
+      booklist[i]['uploader_name'] = user['full_name']
+    }
+    res.send(booklist);
+
+  } else {
+    delete filteredQuery.type;
+    delete filteredQuery.title;
+    let dataFilter = {};
+    let result = []
+
+    // get year data and save to object
+    for (let data in filteredQuery) {
+      if (data === 'yearfrom') {
+        dataFilter['gte'] = filteredQuery[data];
+      } else if (data === 'yearto') {
+        dataFilter['lte'] = filteredQuery[data];
       }
     }
 
-    if (result.length === 0) {
-      res.json({ message: 'Search not found', result });
-    } else {
-      res.json(result);
+    // delete year data from filteredQuery
+    delete filteredQuery.yearfrom;
+    delete filteredQuery.yearto;
+
+    const books = await prisma.pdfBook.findMany({
+      where: {
+        AND: [
+          filteredQuery,
+          {
+            year: dataFilter,
+          }
+        ],
+      },
+    });
+
+    for (let i = 0; i < books.length; i++) {
+      // get category name via id
+      const category = await prisma.category.findUnique({
+        where: { id: +books[i]['category_id'] }
+      })
+      books[i]['category'] = category['name']
+      // get language name via id
+      const language = await prisma.languages.findUnique({
+        where: { id: +books[i]['language_id'] }
+      })
+      books[i]['language'] = language['name']
+      // get username via id
+      const user = await prisma.users.findUnique({
+        where: { id: +books[i]["uploader_id"] }
+      })
+      books[i]['uploader_name'] = user['full_name']
+      // fetch average rating
+      fetch(`http://localhost:3000/review/${books[i]['id']}`)
+        .then(response => response.json())
+        .then(data => {
+          books[i]['average_rating'] = data[0]['average_rating'];
+        })
     }
-  } catch (error) {
-    console.error('Error during search:', error);
-    res.status(500).json({ error: 'Error during search' });
+
+    res.send(books);
   }
 });
+
 
 module.exports = router;
