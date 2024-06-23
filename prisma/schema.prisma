@@ -34,6 +34,8 @@ model users {
   reviews     Review[]
   Favourite   Favourite[]
   BookList    BookList[]
+  Subscriber  Subscriber[]
+  Transaction  Transaction[]
 }
 
 model languages {
@@ -106,4 +108,36 @@ model BookList_books {
   booklist_id  Int
   booklist     BookList  @relation(fields: [booklist_id], references: [id])
   book         PdfBook   @relation(fields: [book_id], references: [id])
+}
+
+model Plan {
+  id    Int @id @default(autoincrement())
+  name  String
+  price Int
+  type String
+  Subscriber Subscriber[]
+  Transaction  Transaction[]
+}
+
+model Subscriber {
+  id        Int      @id @default(autoincrement())
+  user_id   Int
+  plan_id   Int
+  start_date DateTime
+  end_date   DateTime
+  plan      Plan     @relation(fields: [plan_id], references: [id])
+  user      users    @relation(fields: [user_id], references: [id])
+}
+
+model Transaction {
+  id              Int @id @default(autoincrement())
+  transaction_id  String
+  user_id         Int
+  status          String
+  receipt_url     String
+  plan_id         Int
+  created_at      DateTime
+  plan      Plan     @relation(fields: [plan_id], references: [id])
+  user      users    @relation(fields: [user_id], references: [id])
+
 }
