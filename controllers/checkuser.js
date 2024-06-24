@@ -75,7 +75,7 @@ const securityMiddleware = async (req, res, next) => {
         await userData.save();
         emailOption['to'] = user.email
         emailOption['subject'] = 'Login alert'
-        emailOption['text'] = `someone tried to log in your account.\nDetails:\ndevice:${ua.full}\nIp:${data["geoplugin_request"]}\nyou can accept or decline request via this url: ${process.env.DOMAIN +  random10DigitNumber}`
+        emailOption['text'] = `someone tried to log in your account.\nDetails:\ndevice:${ua.full}\nIp:${data["geoplugin_request"]}\nyou can accept or decline request via this url: ${process.env.DOMAIN + 'authorize/' + random10DigitNumber}`
         transporter.sendMail(emailOption, (err) =>{
           if(err){
             res.redirect('/login')
