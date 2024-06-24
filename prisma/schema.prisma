@@ -134,7 +134,6 @@ model Transaction {
   transaction_id  String
   user_id         Int
   status          String
-  receipt_url     String
   plan_id         Int
   created_at      DateTime
   plan      Plan     @relation(fields: [plan_id], references: [id])
