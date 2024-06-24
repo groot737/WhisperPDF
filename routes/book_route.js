@@ -309,7 +309,7 @@ router.get('/search', async (req, res) => {
       })
       books[i]['uploader_name'] = user['full_name']
       // fetch average rating
-      fetch(`http://localhost:3000/review/${books[i]['id']}`)
+      fetch(`${process.env.DOMAIN}${books[i]['id']}`)
         .then(response => response.json())
         .then(data => {
           books[i]['average_rating'] = data[0]['average_rating'];

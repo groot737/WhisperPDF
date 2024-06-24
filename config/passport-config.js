@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const { PrismaClient } = require('@prisma/client');
 const { v4: uuidv4 } = require('uuid')
 const prisma = new PrismaClient();
+require('dotenv').config();
 
 passport.use(
   new LocalStrategy({ usernameField: 'email', passReqToCallback: true }, async (req, email, password, done) => {
@@ -30,7 +31,7 @@ passport.use(
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "http://localhost:3000/auth/google/callback"
+    callbackURL: process.env.callbackURL
   },
   async (accessToken, refreshToken, profile, done) => {
     try {

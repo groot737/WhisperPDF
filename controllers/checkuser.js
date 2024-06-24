@@ -8,6 +8,7 @@ const { User } = require('../config/mongodb');
 const { transporter, emailOption } = require('../config/nodemailer-config')
 const bcrypt = require('bcrypt')
 const io = global.io;
+require('dotenv').config();
 
 // if user is not authorized, redirect to login
 const adminMiddleware = (req, res, next) => {
@@ -74,7 +75,7 @@ const securityMiddleware = async (req, res, next) => {
         await userData.save();
         emailOption['to'] = user.email
         emailOption['subject'] = 'Login alert'
-        emailOption['text'] = `someone tried to log in your account.\nDetails:\ndevice:${ua.full}\nIp:${data["geoplugin_request"]}\nyou can accept or decline request via this url: ${"http://localhost:3000/authorize/"+ random10DigitNumber}`
+        emailOption['text'] = `someone tried to log in your account.\nDetails:\ndevice:${ua.full}\nIp:${data["geoplugin_request"]}\nyou can accept or decline request via this url: ${process.env.DOMAIN +  random10DigitNumber}`
         transporter.sendMail(emailOption, (err) =>{
           if(err){
             res.redirect('/login')
