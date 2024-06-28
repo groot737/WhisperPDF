@@ -20,7 +20,6 @@
     "@prisma/client": "^5.12.1",
     "aws-sdk": "^2.1599.0",
     "bcrypt": "^5.1.1",
-    "cron": "^3.1.7",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
@@ -34,7 +33,7 @@
     "passport-google-oauth": "^2.0.0",
     "passport-local": "^1.0.0",
     "socket.io": "^4.7.5",
-    "stripe": "^15.12.0",
+    "stripe": "^16.1.0",
     "user-agent": "^1.0.4"
   },
   "devDependencies": {
