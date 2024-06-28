@@ -6,20 +6,28 @@ const { PrismaClient, Prisma }    = require('@prisma/client');
 const {adminMiddleware}           = require('../controllers/checkuser')
 const prisma                      = new PrismaClient();
 const {transporter, emailOption}  = require('../config/nodemailer-config')
+const axios = require('axios')
 
 
 router.get('/', (req, res) => {
   res.render('payment')
 })
 
+
+// ======== LIFETIME PLAN ENDPOINT =======================//
 router.post('/lifetime',adminMiddleware, async (req, res) => {
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
-        price: 'price_1PUupAE3rQZeiiFHfCtfkSJR',
+        price: "price_1PWiU9E3rQZeiiFHm3HtWHou",
         quantity: 1,
       },
     ],
+    payment_intent_data : {
+      "metadata": {
+        "userId": req.user.id,
+      }
+    },
     mode: 'payment',
     customer_email: req.user.email,
     success_url: process.env.DOMAIN + `checkout/complete/{CHECKOUT_SESSION_ID}/1`,
@@ -29,14 +37,20 @@ router.post('/lifetime',adminMiddleware, async (req, res) => {
   res.redirect(303, session.url);
 })
 
+// ======== SUBSCRIPTION PLAN ENDPOINT =======================//
 router.post('/subscription', adminMiddleware, async (req, res) => {
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
-        price: "price_1PVIKpE3rQZeiiFHHYggDucr",
+        price:  "price_1PWiUOE3rQZeiiFHhhMeUutK",
         quantity: 1,
       },
     ],
+    subscription_data: {
+      metadata: {
+        "userId": req.user.id,
+      }
+    },
     mode: 'subscription',
     customer_email: req.user.email,
     success_url: process.env.DOMAIN + `checkout/complete/{CHECKOUT_SESSION_ID}/2`,
@@ -47,7 +61,7 @@ router.post('/subscription', adminMiddleware, async (req, res) => {
   res.redirect(303, session.url);
 })
 
-
+// ======== COMPLETE PAGE ENDPOINT =======================//
 router.get('/complete/:id/:type', adminMiddleware, async (req, res) => {
   const sessionId = req.params.id;
   const type = +req.params.type; // Ensure type is a number
@@ -95,6 +109,7 @@ router.get('/complete/:id/:type', adminMiddleware, async (req, res) => {
         plan_id: planId,
         start_date: new Date(),
         end_date: endDate,
+        status: "active"
       }
     });
 
