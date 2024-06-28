@@ -123,6 +123,7 @@ model Subscriber {
   id        Int      @id @default(autoincrement())
   user_id   Int
   plan_id   Int
+  status   String
   start_date DateTime
   end_date   DateTime
   plan      Plan     @relation(fields: [plan_id], references: [id])
