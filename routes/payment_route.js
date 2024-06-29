@@ -6,7 +6,6 @@ const { PrismaClient, Prisma }    = require('@prisma/client');
 const {adminMiddleware}           = require('../controllers/checkuser')
 const prisma                      = new PrismaClient();
 const {transporter, emailOption}  = require('../config/nodemailer-config')
-const axios = require('axios')
 
 
 router.get('/', (req, res) => {
@@ -19,7 +18,7 @@ router.post('/lifetime',adminMiddleware, async (req, res) => {
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
-        price: "price_1PWiU9E3rQZeiiFHm3HtWHou",
+        price: process.env.lifetime_price_id,
         quantity: 1,
       },
     ],
@@ -42,7 +41,7 @@ router.post('/subscription', adminMiddleware, async (req, res) => {
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
-        price:  "price_1PWiUOE3rQZeiiFHhhMeUutK",
+        price:  process.env.subscription_price_id,
         quantity: 1,
       },
     ],
@@ -54,7 +53,7 @@ router.post('/subscription', adminMiddleware, async (req, res) => {
     mode: 'subscription',
     customer_email: req.user.email,
     success_url: process.env.DOMAIN + `checkout/complete/{CHECKOUT_SESSION_ID}/2`,
-    cancel_url: process.env.DOMAIN + `checkout/checkout/`
+    cancel_url: process.env.DOMAIN + `checkout/`
   });
 
 
@@ -68,6 +67,7 @@ router.get('/complete/:id/:type', adminMiddleware, async (req, res) => {
   const planId = type === 1 ? 1 : type === 2 ? 2 : null;
 
   if (!planId) {
+    res.redirect('/')
     return res.status(400).send('Invalid type');
   }
 
@@ -75,20 +75,25 @@ router.get('/complete/:id/:type', adminMiddleware, async (req, res) => {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     const lineItems = await stripe.checkout.sessions.listLineItems(sessionId);
 
-    let paymentIntentId, paymentIntent, subscriptionId, subscription;
+    let paymentIntentId, paymentIntent, subscriptionId, subscription, status;
 
     if (type === 1) {
       paymentIntentId = session.payment_intent;
       if (!paymentIntentId) {
+        res.redirect('/')
         throw new Error('Payment intent ID not found in the session.');
       }
       paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      status = paymentIntent ? paymentIntent.status : 'unknown';
     } else if (type === 2) {
       subscriptionId = session.subscription;
       if (!subscriptionId) {
+        res.redirect('/')
         throw new Error('Subscription ID not found in the session.');
       }
       subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const invoice = await stripe.invoices.retrieve(subscription.latest_invoice);
+      status = invoice ? invoice.status : 'unknown';
     }
 
     const transaction = await prisma.transaction.create({
@@ -96,8 +101,8 @@ router.get('/complete/:id/:type', adminMiddleware, async (req, res) => {
         user_id: req.user.id,
         plan_id: planId,
         created_at: new Date(),
-        transaction_id: paymentIntentId || subscription.latest_invoice,
-        status: paymentIntent ? paymentIntent.status : 'unknown',
+        transaction_id: subscriptionId,
+        status: status,
       }
     });
 
@@ -124,5 +129,30 @@ router.get('/complete/:id/:type', adminMiddleware, async (req, res) => {
     res.redirect('/');
   }
 });
+
+
+// ======== CANCEL PLAN ENDPOINT =======================//
+router.get('/cancel-plan',adminMiddleware, async (req, res) => {
+  const current_plan = await prisma.subscriber.findMany({
+    where: {user_id: req.user.id}
+  })
+  if(current_plan.plan_id == 1){
+    const removeSubscription = await prisma.subscriber.deleteMany({
+      where: {user_id: req.user.id}
+    })
+  } else{
+    const transaction = await prisma.transaction.findMany({
+      where: {user_id: req.user.id, plan_id: 2}
+    })
+    // user might purchased subscription again so we have to get lastest transaction related to user
+    const transactionId = transaction.slice(-1)[0].transaction_id
+    const subscription = await stripe.subscriptions.cancel(
+      transactionId
+    )
+    .then(() => {
+      res.send('subscription cancelled')
+    })
+  }
+})
 
 module.exports = router
