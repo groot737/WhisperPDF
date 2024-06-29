@@ -5,7 +5,8 @@ const stripe                      = require('stripe')(process.env.stripe_secret_
 const { PrismaClient, Prisma }    = require('@prisma/client');
 const {adminMiddleware}           = require('../controllers/checkuser')
 const prisma                      = new PrismaClient();
-const {transporter, emailOption}  = require('../config/nodemailer-config')
+const {transporter, emailOption}  = require('../config/nodemailer-config');
+const { checkPlan } = require('../controllers/checkplan');
 
 
 router.get('/', (req, res) => {
@@ -14,7 +15,7 @@ router.get('/', (req, res) => {
 
 
 // ======== LIFETIME PLAN ENDPOINT =======================//
-router.post('/lifetime',adminMiddleware, async (req, res) => {
+router.post('/lifetime',adminMiddleware,checkPlan, async (req, res) => {
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
@@ -37,7 +38,7 @@ router.post('/lifetime',adminMiddleware, async (req, res) => {
 })
 
 // ======== SUBSCRIPTION PLAN ENDPOINT =======================//
-router.post('/subscription', adminMiddleware, async (req, res) => {
+router.post('/subscription', adminMiddleware, checkPlan, async (req, res) => {
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
