@@ -147,6 +147,6 @@ model Download{
   id Int @id @default(autoincrement())
   user_id Int  @unique
   download_date DateTime
-  attempts  Int
+  attempts  Int @default(0)
   user      users    @relation(fields: [user_id], references: [id])
 }
