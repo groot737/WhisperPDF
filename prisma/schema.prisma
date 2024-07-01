@@ -35,7 +35,8 @@ model users {
   Favourite   Favourite[]
   BookList    BookList[]
   Subscriber  Subscriber[]
-  Transaction  Transaction[]
+  Transaction Transaction[]
+  Download    Download[]
 }
 
 model languages {
@@ -140,4 +141,11 @@ model Transaction {
   plan      Plan     @relation(fields: [plan_id], references: [id])
   user      users    @relation(fields: [user_id], references: [id])
 
+}
+
+model Download{
+  id Int @id @default(autoincrement())
+  user_id Int  @unique
+  download_date DateTime
+  user      users    @relation(fields: [user_id], references: [id])
 }
