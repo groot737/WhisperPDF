@@ -1,25 +1,24 @@
-const express = require('express');
-const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-const { createUser } = require('../config/dbfunction/register');
-const bcrypt = require('bcrypt');
-const passport = require('../config/passport-config');
-const { createUserFolders, s3 } = require('../config/cloudfunction/createUserFolder');
-const AWS = require('aws-sdk');
-const { authMiddleware, adminMiddleware, securityMiddleware } = require('../controllers/checkuser');
-const multer = require('multer');
-const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
-const { uploadToS3 } = require('../config/cloudfunction/uploads3')
-const fetch = require('isomorphic-fetch')
-const upload = multer({ dest: 'uploads/' });
-const { transporter, emailOption } = require('../config/nodemailer-config')
-const { verifyMiddleware } = require('../controllers/checkverify')
-const mongoose = require('mongoose')
-const { User } = require('../config/mongodb')
-const io = global.io;
-let global_session_id = "";
+const express                                                  = require('express');
+const router                                                   = express.Router();
+const { PrismaClient }                                         = require('@prisma/client');
+const prisma                                                   = new PrismaClient();
+const { createUser }                                           = require('../config/dbfunction/register');
+const bcrypt                                                   = require('bcrypt');
+const passport                                                 = require('../config/passport-config');
+const { createUserFolders, s3 }                                = require('../config/cloudfunction/createUserFolder');
+const AWS                                                      = require('aws-sdk');
+const { authMiddleware, adminMiddleware, securityMiddleware }  = require('../controllers/checkuser');
+const multer                                                   = require('multer');
+const fs                                                       = require('fs');
+const { v4: uuidv4 }                                           = require('uuid');
+const { uploadToS3 }                                           = require('../config/cloudfunction/uploads3')
+const fetch                                                    = require('isomorphic-fetch')
+const upload                                                   = multer({ dest: 'uploads/' });
+const { transporter, emailOption }                             = require('../config/nodemailer-config')
+const { verifyMiddleware }                                     = require('../controllers/checkverify')
+const mongoose                                                 = require('mongoose')
+const { User }                                                 = require('../config/mongodb');
+const io                                                       = global.io;
 require('dotenv').config();
 
 mongoose.connect(`${process.env.mongodb_url}`)
@@ -272,7 +271,6 @@ router.post('/authorize', async (req, res) => {
       res.redirect('/404');
   }
 });
-
 
 // ================ HANDLE NON MATCHING PAGES ====================//
 // router.use((req, res, next) => { 
