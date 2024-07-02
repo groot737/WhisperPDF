@@ -62,6 +62,7 @@ router.post('/subscription', adminMiddleware, checkPlan, async (req, res) => {
 })
 
 // ======== COMPLETE PAGE ENDPOINT =======================//
+// ======== COMPLETE PAGE ENDPOINT =======================//
 router.get('/complete/:id/:type', adminMiddleware, async (req, res) => {
   const sessionId = req.params.id;
   const type = +req.params.type; // Ensure type is a number
@@ -102,7 +103,7 @@ router.get('/complete/:id/:type', adminMiddleware, async (req, res) => {
         user_id: req.user.id,
         plan_id: planId,
         created_at: new Date(),
-        transaction_id: subscriptionId,
+        transaction_id: type == 1 ? paymentIntentId: subscription,
         status: status,
       }
     });
