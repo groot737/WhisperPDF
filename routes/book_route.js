@@ -320,5 +320,91 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// =============== BOOK DOWNLOAD ===================
+router.post('/download', adminMiddleware, async (req, res) => {
+  const { bookId } = req.body;
+
+  try {
+    // Validate bookId
+    if (bookId === undefined) {
+      return res.status(400).json({ error: 'Invalid bookId' });
+    }
+
+    // Fetch PDF book link
+    const bookLink = await prisma.pdfBook.findUnique({
+      where: { id: +bookId }
+    });
+
+    // Redirect if book not found
+    if (!bookLink) {
+      return res.redirect('/');
+    }
+
+    const userId = req.user.id
+
+    // Check if user is a subscriber
+    const checkSubscriber = await prisma.subscriber.findMany({
+      where: { user_id: userId }
+    });
+
+    if (checkSubscriber.length > 0) {
+      return res.redirect(bookLink.pdf_url);
+    }
+
+    // Check if user data exists in download table
+    const downloadOccurs = await prisma.download.findUnique({
+      where: { user_id: userId }
+    });
+
+    if (downloadOccurs) {
+      // Calculate time difference
+      const lastDate = new Date(downloadOccurs.download_date);
+      const hoursDiff = (new Date() - lastDate) / (1000 * 60 * 60);
+
+      if (hoursDiff >= 12) {
+        // Reset attempts and update download_date
+        await prisma.download.update({
+          where: { user_id: userId },
+          data: {
+            attempts: 0,
+            download_date: new Date()
+          }
+        });
+      } else {
+        // Check if attempts limit is exceeded
+        if (downloadOccurs.attempts >= 12) {
+          return res.json('You have exceeded your download limit. Upgrade to remove the limit.');
+        }
+        
+        // Increment attempts
+        await prisma.download.update({
+          where: { user_id: userId },
+          data: {
+            attempts: downloadOccurs.attempts + 1
+          }
+        });
+      }
+    } else {
+      // Create new entry in download table
+      await prisma.download.create({
+        data: {
+          user_id: userId,
+          attempts: 1,
+          download_date: new Date()
+        }
+      });
+    }
+
+    // Redirect to PDF URL after database operations
+    res.redirect(bookLink.pdf_url);
+
+  } catch (error) {
+    console.error(error);
+    res.redirect('/');
+  }
+});
+
+
+
 
 module.exports = router;
