@@ -65,6 +65,7 @@ model PdfBook {
   uploader_id  Int?
   reviews      Review[]
   BookList_books BookList_books[]
+  Download   Download[]
 }
 
 
@@ -146,7 +147,9 @@ model Transaction {
 model Download{
   id Int @id @default(autoincrement())
   user_id Int  @unique
+  book_id Int
   download_date DateTime
   attempts  Int @default(0)
   user      users    @relation(fields: [user_id], references: [id])
+  book      PdfBook  @relation(fields: [book_id], references: [id])
 }
