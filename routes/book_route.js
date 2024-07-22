@@ -243,10 +243,10 @@ router.get('/search', async (req, res) => {
     const booklist = await prisma.bookList.findMany({
       where: filteredQuery
     });
-    for(let i = 0; i < booklist.length; i++){
-       // get category name via id
+    for (let i = 0; i < booklist.length; i++) {
+      // get category name via id
       const category = await prisma.category.findUnique({
-        where: {id: +booklist[i]['category_id']}
+        where: { id: +booklist[i]['category_id'] }
       })
       booklist[i]['category'] = category['name']
       // get language name via id
@@ -375,7 +375,7 @@ router.post('/download', adminMiddleware, async (req, res) => {
         if (downloadOccurs.attempts >= 12) {
           return res.json('You have exceeded your download limit. Upgrade to remove the limit.');
         }
-        
+
         // Increment attempts
         await prisma.download.update({
           where: { user_id: userId },
@@ -394,6 +394,29 @@ router.post('/download', adminMiddleware, async (req, res) => {
         }
       });
     }
+    
+    // check if book exists in downloads history
+    const data_exist_in_history = await prisma.book_download_history.findMany({
+      where: { user_id: +req.user.id, book_id: +bookId }
+    })
+
+    // if it doesn't exists then increase total_download value
+    if (data_exist_in_history.length == 0) {
+      await prisma.pdfBook.update({
+        where: { uploader_id: +userId, id: +bookId },
+        data: { total_download:{increment: 1} }
+      })
+
+    }
+
+    // add book in download history
+    await prisma.book_download_history.create({
+      data: {
+        user_id: +userId,
+        book_id: +bookId,
+        download_date: new Date()
+      }
+    })
 
     // Redirect to PDF URL after database operations
     res.redirect(bookLink.pdf_url);
