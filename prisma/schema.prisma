@@ -61,6 +61,7 @@ model PdfBook {
   publisher    String
   year         Int
   edition      String
+  total_downloads Int @default(0)
   description  String?
   uploader     users?     @relation(fields: [uploader_id], references: [id])
   uploader_id  Int?
