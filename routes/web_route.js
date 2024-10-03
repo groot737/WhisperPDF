@@ -27,7 +27,11 @@ mongoose.connect(`${process.env.mongodb_url}`)
 router.get('/', async (req, res) => {
   try {
     const books = await prisma.pdfBook.findMany();
-    res.render('index', { books })
+    if (req.user) {
+      res.render('index', { books, user: req.user })
+    } else {
+      res.render('index', { books })
+    }
   } catch (error) {
     console.error('Error during search:', error);
     res.status(500).json({ error: 'Error during search' });
