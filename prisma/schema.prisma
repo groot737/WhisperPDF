@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,155 +8,175 @@ datasource db {
 }
 
 model Category {
-  id       Int      @id @default(autoincrement())
-  name     String   @unique
-  pdfBooks PdfBook[]
+  id       Int        @id @default(autoincrement())
+  name     String     @unique(map: "name") @db.VarChar(255)
   BookList BookList[]
 }
 
 model users {
-  id          Int       @id @default(autoincrement())
-  email       String    @unique
-  password    String
-  full_name   String
-  profile_pic String?   @default("https://i.pinimg.com/474x/97/aa/84/97aa847d061a14894178805f1d551500.jpg")
-  about       String?   @default("No bio yet.")
-  pdfBooks    PdfBook[]
-  session_id  String?   @unique
-  isVerified  Boolean   @default(false)
-  securityEnabled Boolean @default(false)
-  reviews     Review[]
-  Favourite   Favourite[]
-  BookList    BookList[]
-  Subscriber  Subscriber[]
-  Transaction Transaction[]
-  Download    Download[]
+  id                    Int                     @id @default(autoincrement())
+  email                 String                  @unique(map: "email") @db.VarChar(255)
+  password              String                  @db.VarChar(255)
+  full_name             String                  @db.VarChar(255)
+  profile_pic           String?                 @default("https://i.pinimg.com/474x/97/aa/84/97aa847d061a14894178805f1d551500.jpg") @db.VarChar(255)
+  about                 String?                 @default("No bio yet.") @db.VarChar(255)
+  session_id            String?                 @db.VarChar(255)
+  isVerified            Boolean?                @default(false)
+  securityEnabled       Boolean?                @default(false)
+  BookList              BookList[]
+  Download              Download?
+  Favourite             Favourite[]
+  pdfBooks              PdfBook[]
+  reviews               Review[]
+  Subscriber            Subscriber[]
+  Transaction           Transaction[]
   book_download_history book_download_history[]
 }
 
 model languages {
-  id Int @id @default(autoincrement())
-  code String @unique
-  name String @unique
-  PdfBooks PdfBook[] 
+  id       Int        @id @default(autoincrement())
+  code     String     @db.VarChar(2)
+  name     String     @db.VarChar(50)
   BookList BookList[]
+  PdfBooks PdfBook[]
 }
 
 model PdfBook {
-  id           Int       @id @default(autoincrement())
-  cover_url    String?
-  pdf_url      String    @unique
-  title        String
-  author_name  String
-  category     Category? @relation(fields: [category_id], references: [id])
-  category_id  Int?
-  language     languages? @relation(fields: [language_id], references: [id])
-  language_id  Int
-  publisher    String
-  year         Int
-  edition      String
-  total_downloads Int @default(0)
-  description  String?
-  uploader     users?     @relation(fields: [uploader_id], references: [id])
-  uploader_id  Int?
-  total_download Int @default(0)
-  reviews      Review[]
-  BookList_books BookList_books[]
-  Download   Download[]
+  id                    Int                     @id @default(autoincrement())
+  cover_url             String?                 @db.VarChar(255)
+  pdf_url               String                  @unique(map: "pdf_url") @db.VarChar(255)
+  title                 String                  @db.VarChar(255)
+  author_name           String?                 @db.VarChar(255)
+  category_id           Int?
+  publisher             String?                 @db.VarChar(255)
+  year                  Int?                    @db.Year
+  edition               String?                 @db.VarChar(50)
+  description           String?                 @db.Text
+  uploader_id           Int?
+  language_id           Int?
+  total_download        Int?                    @default(0)
+  BookList_books        BookList_books[]
+  Download              Download[]
+  language              languages?              @relation(fields: [language_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_language_id")
+  uploader              users?                  @relation(fields: [uploader_id], references: [id], onUpdate: Restrict, map: "pdfbook_ibfk_2")
+  reviews               Review[]
   book_download_history book_download_history[]
+
+  @@index([category_id], map: "category_id")
+  @@index([language_id], map: "fk_language_id")
+  @@index([uploader_id], map: "uploader_id")
 }
 
-
-
 model Review {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   book_id     Int
   user_id     Int
   rating      Int
-  description String
-  created_at  DateTime @default(now())
-  book        PdfBook  @relation(fields: [book_id], references: [id])
-  user        users    @relation(fields: [user_id], references: [id])
+  description String    @db.Text
+  created_at  DateTime? @default(now()) @db.DateTime(0)
+  book        PdfBook   @relation(fields: [book_id], references: [id], onUpdate: Restrict, map: "review_ibfk_1")
+  user        users     @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "review_ibfk_2")
+
+  @@index([book_id], map: "book_id")
+  @@index([user_id], map: "user_id")
 }
 
 model Favourite {
-  id          Int      @id @default(autoincrement())
-  item_id     Int
-  user_id     Int
-  type        String
-  user        users    @relation(fields: [user_id], references: [id])
+  id      Int    @id @default(autoincrement())
+  item_id Int
+  user_id Int
+  type    String @db.VarChar(255)
+  user    users  @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "fk_user")
+
+  @@index([user_id], map: "fk_user")
 }
 
 model BookList {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  user_id     Int
-  category_id Int      @default(0)
-  language_id  Int @default(0)
-  isPrivate   Boolean  @default(false)
-  user        users    @relation(fields: [user_id], references: [id])
-  category    Category @relation(fields: [category_id], references: [id])
-  language     languages? @relation(fields: [language_id], references: [id])
-  BookList_books BookList_books []
+  id             Int              @id @default(autoincrement())
+  title          String           @db.VarChar(255)
+  description    String           @db.Text
+  user_id        Int
+  category_id    Int?             @default(0)
+  language_id    Int?             @default(0)
+  isPrivate      Boolean?         @default(false)
+  user           users            @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "booklist_ibfk_1")
+  category       Category?        @relation(fields: [category_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "booklist_ibfk_2")
+  language       languages?       @relation(fields: [language_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "booklist_ibfk_3")
+  BookList_books BookList_books[]
 
+  @@index([category_id], map: "category_id")
+  @@index([language_id], map: "language_id")
+  @@index([user_id], map: "user_id")
 }
 
 model BookList_books {
-  id           Int       @id @default(autoincrement())
-  book_id      Int
-  booklist_id  Int
-  booklist     BookList  @relation(fields: [booklist_id], references: [id])
-  book         PdfBook   @relation(fields: [book_id], references: [id])
+  id          Int      @id @default(autoincrement())
+  book_id     Int
+  booklist_id Int
+  booklist    BookList @relation(fields: [booklist_id], references: [id], onUpdate: Restrict, map: "booklist_books_ibfk_1")
+  book        PdfBook  @relation(fields: [book_id], references: [id], onUpdate: Restrict, map: "booklist_books_ibfk_2")
+
+  @@index([book_id], map: "book_id")
+  @@index([booklist_id], map: "booklist_id")
 }
 
 model Plan {
-  id    Int @id @default(autoincrement())
-  name  String
-  price Int
-  type String
-  Subscriber Subscriber[]
-  Transaction  Transaction[]
+  id          Int           @id @default(autoincrement())
+  name        String?       @db.VarChar(255)
+  price       Int?
+  type        String?       @db.VarChar(255)
+  Subscriber  Subscriber[]
+  Transaction Transaction[]
 }
 
 model Subscriber {
-  id        Int      @id @default(autoincrement())
-  user_id   Int
-  plan_id   Int
-  status   String
-  start_date DateTime
-  end_date   DateTime
-  plan      Plan     @relation(fields: [plan_id], references: [id])
-  user      users    @relation(fields: [user_id], references: [id])
+  id         Int       @id @default(autoincrement())
+  user_id    Int?
+  plan_id    Int?
+  start_date DateTime? @db.DateTime(0)
+  end_date   DateTime? @db.DateTime(0)
+  status     String?   @db.VarChar(10)
+  user       users?    @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "subscriber_ibfk_1")
+  plan       Plan?     @relation(fields: [plan_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "subscriber_ibfk_2")
+
+  @@index([plan_id], map: "plan_id")
+  @@index([user_id], map: "user_id")
 }
 
 model Transaction {
-  id              Int @id @default(autoincrement())
-  transaction_id  String
-  user_id         Int
-  status          String
-  plan_id         Int
-  created_at      DateTime
-  plan      Plan     @relation(fields: [plan_id], references: [id])
-  user      users    @relation(fields: [user_id], references: [id])
+  id             Int       @id @default(autoincrement())
+  transaction_id String?   @db.VarChar(255)
+  user_id        Int?
+  status         String?   @db.VarChar(255)
+  plan_id        Int?
+  created_at     DateTime? @db.DateTime(0)
+  user           users?    @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "transaction_ibfk_1")
+  plan           Plan?     @relation(fields: [plan_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "transaction_ibfk_2")
 
+  @@index([plan_id], map: "plan_id")
+  @@index([user_id], map: "user_id")
 }
 
-model Download{
-  id Int @id @default(autoincrement())
-  user_id Int  @unique
-  book_id Int
-  download_date DateTime
-  attempts  Int @default(0)
-  user      users    @relation(fields: [user_id], references: [id])
-  book      PdfBook  @relation(fields: [book_id], references: [id])
+model Download {
+  id            Int      @id @default(autoincrement())
+  user_id       Int      @unique(map: "user_id")
+  download_date DateTime @db.DateTime(0)
+  attempts      Int?     @default(0)
+  book_id       Int?
+  user          users    @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "download_ibfk_1")
+  book          PdfBook? @relation(fields: [book_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_book")
+
+  @@index([book_id], map: "fk_book")
 }
 
-model book_download_history{
-  id            Int @id @default(autoincrement())
-  user_id       Int 
+model book_download_history {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
   book_id       Int
-  download_date DateTime
-  user      users    @relation(fields: [user_id], references: [id])
-  book      PdfBook  @relation(fields: [book_id], references: [id])
+  download_date DateTime @db.DateTime(0)
+  user          users    @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "book_download_history_ibfk_1")
+  book          PdfBook  @relation(fields: [book_id], references: [id], onUpdate: Restrict, map: "book_download_history_ibfk_2")
+
+  @@index([book_id], map: "book_id")
+  @@index([user_id], map: "user_id")
 }
