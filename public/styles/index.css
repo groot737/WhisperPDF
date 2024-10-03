@@ -14,7 +14,7 @@ body {
     display: grid;
     grid-template-columns: auto;
     grid-row-gap: 60px;
-    overflow: hidden; /* Prevents overflow */
+    overflow-x: hidden;
 }
 
 .navbar {
