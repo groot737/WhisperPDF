@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/groot737/WhisperPDF#readme",
   "dependencies": {
-    "@prisma/client": "^5.12.1",
+    "@prisma/client": "^5.20.0",
     "aws-sdk": "^2.1599.0",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
@@ -32,11 +32,9 @@
     "passport": "^0.7.0",
     "passport-google-oauth": "^2.0.0",
     "passport-local": "^1.0.0",
+    "prisma": "^5.20.0",
     "socket.io": "^4.7.5",
     "stripe": "^16.1.0",
     "user-agent": "^1.0.4"
-  },
-  "devDependencies": {
-    "prisma": "^5.12.1"
   }
 }
