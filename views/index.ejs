@@ -5,32 +5,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WhisperPDF🚀</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="styles/index.css">
 </head>
 
 <body>
+    <nav class="navbar navbar-expand-lg">
+        <a class="navbar-brand" href="#">WhisperPDF🚀</a>
+        <div class="ml-auto">
+            <% if (typeof user != "undefined") { %>
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Hello, <%= user['full_name'] %>
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" href="/dashboard">Dashboard</a>
+                        <form action="/logout" method="POST" style="display: inline;">
+                            <button  type="submit" class="dropdown-item" style="border: none; background: none; padding: 10px 20px; text-align: left; width: 100%; outline: none;">
+                                Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            <% } else { %>
+                <a href="/login" class="btn btn-outline-primary">Login</a>
+            <% } %>
+        </div>
+    </nav>
+
     <div class="container text-center">
         <div class="title display-4">WhisperPDF🚀</div>
-        <div class="minitext">Open source pdf book library.</div>
+        <div class="minitext">Open source PDF book library.</div>
         <form action="/book/search" method="post" class="search-container">
             <input type="text" name="title" class="form-control search-bar" placeholder="Search...">
             <button type="submit" class="btn btn-primary search-button">Search</button>
-        </form>          
+        </form>
+
         <div class="books-block">
             <div class="top-box">
-                <h3>Recent books</h3>
+                <h3>Recent Books</h3>
                 <hr>
             </div>
             <div class="items">
                 <% books.forEach(element => { %>
-                   <div class="item">
-                    <a href="/book/id/<%= element['id'] %>"></a>
-                    <img src="<%= element['cover_url'] %>" alt="">
-                   </div>
+                    <div class="item">
+                        <a href="/book/id/<%= element['id'] %>"></a>
+                        <img src="<%= element['cover_url'] %>" alt="">
+                    </div>
                 <% }) %>
             </div>
         </div>
     </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>
