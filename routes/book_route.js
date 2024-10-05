@@ -209,31 +209,24 @@ router.get('/search', async (req, res) => {
   const validQuery = ["title", "language_id", "type", "category_id", "yearfrom", "yearto"];
   let filteredQuery = {};
 
-  // set default value for type 
-  if (typeof type === "undefined") {
-    type = "book";
-  }
+  // Set default value for type
+  type = type || "book";
+  title = title || "";
 
-  if (typeof title === "undefined") {
-    title = "";
-  }
-
-  // add type and title to filtered query
+  // Add type and title to filtered query
   filteredQuery['type'] = type;
   filteredQuery['title'] = title.trim().toLowerCase();
 
-  // get other parameters
+  // Get other parameters
   for (let data in req.query) {
-    // detect only correct parameters
     if (validQuery.includes(data)) {
-      // filter detected parameters
       if (data !== 'title' && data !== 'type' && !isNaN(+req.query[data]) && req.query[data] !== '') {
         filteredQuery[data] = +req.query[data];
       }
     }
   }
 
-  // if type is booklist remove non-required parameters
+  // Handle booklist type
   if (type === "booklist") {
     delete filteredQuery.yearfrom;
     delete filteredQuery.yearto;
@@ -241,84 +234,74 @@ router.get('/search', async (req, res) => {
     filteredQuery['isPrivate'] = false;
 
     const booklist = await prisma.bookList.findMany({
-      where: filteredQuery
-    });
-    for (let i = 0; i < booklist.length; i++) {
-      // get category name via id
-      const category = await prisma.category.findUnique({
-        where: { id: +booklist[i]['category_id'] }
-      })
-      booklist[i]['category'] = category['name']
-      // get language name via id
-      const language = await prisma.languages.findUnique({
-        where: { id: +booklist[i]['language_id'] }
-      })
-      booklist[i]['language'] = language['name']
-      // get username via id
-      const user = await prisma.users.findUnique({
-        where: { id: +booklist[i]["user_id"] }
-      })
-      booklist[i]['uploader_name'] = user['full_name']
-    }
-    res.send(booklist);
-
-  } else {
-    delete filteredQuery.type;
-    delete filteredQuery.title;
-    let dataFilter = {};
-    let result = []
-
-    // get year data and save to object
-    for (let data in filteredQuery) {
-      if (data === 'yearfrom') {
-        dataFilter['gte'] = filteredQuery[data];
-      } else if (data === 'yearto') {
-        dataFilter['lte'] = filteredQuery[data];
-      }
-    }
-
-    // delete year data from filteredQuery
-    delete filteredQuery.yearfrom;
-    delete filteredQuery.yearto;
-
-    const books = await prisma.pdfBook.findMany({
-      where: {
-        AND: [
-          filteredQuery,
-          {
-            year: dataFilter,
-          }
-        ],
-      },
+      where: filteredQuery,
     });
 
-    for (let i = 0; i < books.length; i++) {
-      // get category name via id
-      const category = await prisma.category.findUnique({
-        where: { id: +books[i]['category_id'] }
-      })
-      books[i]['category'] = category['name']
-      // get language name via id
-      const language = await prisma.languages.findUnique({
-        where: { id: +books[i]['language_id'] }
-      })
-      books[i]['language'] = language['name']
-      // get username via id
-      const user = await prisma.users.findUnique({
-        where: { id: +books[i]["uploader_id"] }
-      })
-      books[i]['uploader_name'] = user['full_name']
-      // fetch average rating
-      fetch(`${process.env.DOMAIN}${books[i]['id']}`)
-        .then(response => response.json())
-        .then(data => {
-          books[i]['average_rating'] = data[0]['average_rating'];
-        })
+    // Populate additional fields
+    for (const book of booklist) {
+      const category = await prisma.category.findUnique({ where: { id: +book['category_id'] } });
+      book['category'] = category['name'];
+
+      const language = await prisma.languages.findUnique({ where: { id: +book['language_id'] } });
+      book['language'] = language['name'];
+
+      const user = await prisma.users.findUnique({ where: { id: +book["user_id"] } });
+      book['uploader_name'] = user['full_name'];
     }
 
-    res.send(books);
+    return res.send(booklist);
   }
+
+  // Handle pdfBook type
+  delete filteredQuery.type;
+  delete filteredQuery.title;
+
+  let dataFilter = {};
+  for (let data in filteredQuery) {
+    if (data === 'yearfrom') {
+      dataFilter['gte'] = filteredQuery[data];
+    } else if (data === 'yearto') {
+      dataFilter['lte'] = filteredQuery[data];
+    }
+  }
+
+  delete filteredQuery.yearfrom;
+  delete filteredQuery.yearto;
+
+  const books = await prisma.pdfBook.findMany({
+    where: {
+      AND: [
+        filteredQuery, // Existing filters
+        dataFilter && Object.keys(dataFilter).length > 0
+          ? { year: dataFilter } // Year filter
+          : {}, // Skip if no year conditions
+        title
+          ? { title: { contains: title.trim().toLowerCase() } } // Title filter without mode
+          : {}, // If no title, skip this filter
+      ],
+    },
+  });
+
+  // Populate additional fields for each book
+  for (const book of books) {
+    const category = await prisma.category.findUnique({ where: { id: +book['category_id'] } });
+    book['category'] = category['name'];
+
+    const language = await prisma.languages.findUnique({ where: { id: +book['language_id'] } });
+    book['language'] = language['name'];
+
+    const user = await prisma.users.findUnique({ where: { id: +book["uploader_id"] } });
+    book['uploader_name'] = user['full_name'];
+
+    // Fetch average rating
+    const ratingResponse = await fetch(`${process.env.DOMAIN}review/${book['id']}`);
+    const ratingData = await ratingResponse.json();
+    book['average_rating'] = ratingData[0] ? ratingData[0]['average_rating'] : null; // Handle if no ratings exist
+  }
+
+  res.send(books);
 });
+
 
 // =============== BOOK DOWNLOAD ===================
 router.post('/download', adminMiddleware, async (req, res) => {
